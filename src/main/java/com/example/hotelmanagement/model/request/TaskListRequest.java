@@ -1,0 +1,13 @@
+package com.example.hotelmanagement.model.request;
+
+import lombok.Data;
+
+import java.io.Serializable;
+import java.util.List;
+
+@Data
+public class TaskListRequest implements Serializable {
+    private List<TaskColumnRequest> requireTaskColumnList;
+    private Long departmentId;
+    private Integer priority;
+}

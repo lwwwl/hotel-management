@@ -1,6 +1,6 @@
 package com.example.hotelmanagement.dao.repository;
 
-import com.example.hoteltask.dao.entity.HotelMenu;
+import com.example.hotelmanagement.dao.entity.HotelMenu;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;

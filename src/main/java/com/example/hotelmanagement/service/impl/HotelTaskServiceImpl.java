@@ -67,19 +67,19 @@ public class HotelTaskServiceImpl implements HotelTaskService {
     @Override
     public ResponseEntity<?> addExecutor(Long userId, TaskAddExecutorRequest request) {
         Map<String, String> headers = createUserIdHeader(userId);
-        return httpClientUtil.post("/task/executor/add", request, headers, ApiResponse.class);
+        return httpClientUtil.post("/task/add-executor", request, headers, ApiResponse.class);
     }
 
     @Override
     public ResponseEntity<?> transferExecutor(Long userId, TaskTransferExecutorRequest request) {
         Map<String, String> headers = createUserIdHeader(userId);
-        return httpClientUtil.post("/task/executor/transfer", request, headers, ApiResponse.class);
+        return httpClientUtil.post("/task/transfer-executor", request, headers, ApiResponse.class);
     }
 
     @Override
     public ResponseEntity<?> changeStatus(Long userId, TaskChangeStatusRequest request) {
         Map<String, String> headers = createUserIdHeader(userId);
-        return httpClientUtil.post("/task/status", request, headers, ApiResponse.class);
+        return httpClientUtil.post("/task/change-status", request, headers, ApiResponse.class);
     }
 
     @Override

@@ -29,4 +29,8 @@ public class ApiResponse<T> {
         response.setError(error);
         return response;
     }
+
+    public static <T> ApiResponse<T> error(String error) {
+        return error(500, "请求失败", error);
+    }
 } 

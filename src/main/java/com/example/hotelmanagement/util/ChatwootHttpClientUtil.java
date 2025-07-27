@@ -14,18 +14,22 @@ import org.springframework.web.util.UriComponentsBuilder;
 import java.util.Map;
 
 @Component
-public class HttpClientUtil {
+public class ChatwootHttpClientUtil {
 
     private final RestTemplate restTemplate;
     private final String baseUrl;
+    private final String apiAccessToken;
 
     @Autowired
-    public HttpClientUtil(RestTemplate restTemplate, @Value("${api.downstream.baseUrl}") String baseUrl) {
+    public ChatwootHttpClientUtil(RestTemplate restTemplate, 
+                                 @Value("${api.chatwoot.baseUrl}") String baseUrl,
+                                 @Value("${api.chatwoot.accessToken:}") String apiAccessToken) {
         this.restTemplate = restTemplate;
         this.baseUrl = baseUrl;
+        this.apiAccessToken = apiAccessToken;
     }
 
-    public <T, R> ResponseEntity<R> get(String path, T requestBody, Map<String, String> queryParams, Map<String, String> headers, Class<R> responseType) {
+    public <T, R> ResponseEntity<R> get(String path, T requestBody, Map<String, String> queryParams, Class<R> responseType) {
         UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(baseUrl + path);
         
         // Add query parameters if provided
@@ -33,12 +37,7 @@ public class HttpClientUtil {
             queryParams.forEach(builder::queryParam);
         }
         
-        HttpHeaders httpHeaders = new HttpHeaders();
-        httpHeaders.setContentType(MediaType.APPLICATION_JSON);
-        // Add custom headers if provided
-        if (headers != null) {
-            headers.forEach(httpHeaders::set);
-        }
+        HttpHeaders httpHeaders = createHeaders();
         
         HttpEntity<T> entity = new HttpEntity<>(requestBody, httpHeaders);
         
@@ -50,13 +49,8 @@ public class HttpClientUtil {
         );
     }
 
-    public <T, R> ResponseEntity<R> post(String path, T requestBody, Map<String, String> headers, Class<R> responseType) {
-        HttpHeaders httpHeaders = new HttpHeaders();
-        httpHeaders.setContentType(MediaType.APPLICATION_JSON);
-        // Add custom headers if provided
-        if (headers != null) {
-            headers.forEach(httpHeaders::set);
-        }
+    public <T, R> ResponseEntity<R> post(String path, T requestBody, Class<R> responseType) {
+        HttpHeaders httpHeaders = createHeaders();
         
         HttpEntity<T> entity = new HttpEntity<>(requestBody, httpHeaders);
         
@@ -68,13 +62,8 @@ public class HttpClientUtil {
         );
     }
 
-    public <T, R> ResponseEntity<R> put(String path, T requestBody, Map<String, String> headers, Class<R> responseType) {
-        HttpHeaders httpHeaders = new HttpHeaders();
-        httpHeaders.setContentType(MediaType.APPLICATION_JSON);
-        // Add custom headers if provided
-        if (headers != null) {
-            headers.forEach(httpHeaders::set);
-        }
+    public <T, R> ResponseEntity<R> put(String path, T requestBody, Class<R> responseType) {
+        HttpHeaders httpHeaders = createHeaders();
         
         HttpEntity<T> entity = new HttpEntity<>(requestBody, httpHeaders);
         
@@ -86,7 +75,20 @@ public class HttpClientUtil {
         );
     }
 
-    public <R> ResponseEntity<R> delete(String path, Map<String, String> queryParams, Map<String, String> headers, Class<R> responseType) {
+    public <T, R> ResponseEntity<R> patch(String path, T requestBody, Class<R> responseType) {
+        HttpHeaders httpHeaders = createHeaders();
+        
+        HttpEntity<T> entity = new HttpEntity<>(requestBody, httpHeaders);
+        
+        return restTemplate.exchange(
+            baseUrl + path,
+            HttpMethod.PATCH,
+            entity,
+            responseType
+        );
+    }
+
+    public <R> ResponseEntity<R> delete(String path, Map<String, String> queryParams, Class<R> responseType) {
         UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(baseUrl + path);
         
         // Add query parameters if provided
@@ -94,12 +96,7 @@ public class HttpClientUtil {
             queryParams.forEach(builder::queryParam);
         }
         
-        HttpHeaders httpHeaders = new HttpHeaders();
-        httpHeaders.setContentType(MediaType.APPLICATION_JSON);
-        // Add custom headers if provided
-        if (headers != null) {
-            headers.forEach(httpHeaders::set);
-        }
+        HttpHeaders httpHeaders = createHeaders();
         
         HttpEntity<?> entity = new HttpEntity<>(httpHeaders);
         
@@ -109,5 +106,17 @@ public class HttpClientUtil {
             entity,
             responseType
         );
+    }
+
+    private HttpHeaders createHeaders() {
+        HttpHeaders httpHeaders = new HttpHeaders();
+        httpHeaders.setContentType(MediaType.APPLICATION_JSON);
+        
+        // Add Chatwoot API access token if configured
+        if (apiAccessToken != null && !apiAccessToken.isEmpty()) {
+            httpHeaders.set("api_access_token", apiAccessToken);
+        }
+        
+        return httpHeaders;
     }
 } 

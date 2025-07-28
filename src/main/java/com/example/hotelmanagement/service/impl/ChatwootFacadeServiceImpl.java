@@ -37,6 +37,7 @@ public class ChatwootFacadeServiceImpl implements ChatwootFacadeService {
     private ChatwootConversationService chatwootConversationService;
 
     @Resource
+    private ChatwootMessageService chatwootMessageService;
 
 
     @Value("${chatwoot.account.id}")
@@ -117,6 +118,7 @@ public class ChatwootFacadeServiceImpl implements ChatwootFacadeService {
 
     @Override
     public ResponseEntity<?> createContact(ChatwootContactCreateRequest request) {
+        // todo 存source_id绑定到user表
         return ResponseEntity.ok(chatwootContactService.createContact(request));
     }
 
@@ -178,5 +180,15 @@ public class ChatwootFacadeServiceImpl implements ChatwootFacadeService {
     @Override
     public ResponseEntity<?> toggleConversationStatus(ChatwootToggleConversationStatusRequest request) {
         return ResponseEntity.ok(chatwootConversationService.toggleConversationStatus(request));
+    }
+
+    @Override
+    public ResponseEntity<?> createMessage(ChatwootCreateMessageRequest request) {
+        return ResponseEntity.ok(chatwootMessageService.createMessage(request));
+    }
+
+    @Override
+    public ResponseEntity<?> getMessages(ChatwootGetMessagesRequest request) {
+        return ResponseEntity.ok(chatwootMessageService.getMessages(request));
     }
 }

@@ -17,6 +17,8 @@ import com.example.hotelmanagement.model.request.chatwoot.ChatwootAddConversatio
 import com.example.hotelmanagement.model.request.chatwoot.ChatwootAssignConversationRequest;
 import com.example.hotelmanagement.model.request.chatwoot.ChatwootUpdateConversationCustomAttributesRequest;
 import com.example.hotelmanagement.model.request.chatwoot.ChatwootToggleConversationStatusRequest;
+import com.example.hotelmanagement.model.request.chatwoot.ChatwootCreateMessageRequest;
+import com.example.hotelmanagement.model.request.chatwoot.ChatwootGetMessagesRequest;
 
 import org.springframework.http.ResponseEntity;
 
@@ -61,4 +63,10 @@ public interface ChatwootFacadeService {
     ResponseEntity<?> updateConversationCustomAttributes(ChatwootUpdateConversationCustomAttributesRequest request);
 
     ResponseEntity<?> toggleConversationStatus(ChatwootToggleConversationStatusRequest request);
+
+    // -------------- 消息管理 --------------
+
+    ResponseEntity<?> createMessage(ChatwootCreateMessageRequest request);
+
+    ResponseEntity<?> getMessages(ChatwootGetMessagesRequest request);
 }

@@ -1,44 +1,63 @@
 package com.example.hotelmanagement.model.response.chatwoot;
 
+import com.example.hotelmanagement.model.bo.ChatwootUserBO;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
 import java.io.Serializable;
+import java.util.List;
+import java.util.Map;
 
 @Data
 public class ChatwootCreateUserResponse implements Serializable {
-    @JsonProperty("id")
     private Long id;
+
+    @JsonProperty("access_token")
+    private String accessToken;
 
     @JsonProperty("account_id")
     private Long accountId;
 
-    @JsonProperty("availability_status")
-    private String availabilityStatus;
-
-    @JsonProperty("auto_offline")
-    private Boolean autoOffline;
-
-    @JsonProperty("confirmed")
-    private Boolean confirmed;
-
-    @JsonProperty("email")
-    private String email;
-
     @JsonProperty("available_name")
     private String availableName;
 
-    @JsonProperty("name")
-    private String name;
+    @JsonProperty("avatar_url")
+    private String avatarUrl;
 
-    @JsonProperty("role")
+    private Boolean confirmed;
+
+    @JsonProperty("display_name")
+    private String displayName;
+
+    @JsonProperty("message_signature")
+    private String messageSignature;
+
+    private String email;
+
+    @JsonProperty("hmac_identifier")
+    private String hmacIdentifier;
+
+    @JsonProperty("inviter_id")
+    private Long inviterId;
+
+    private String name;
+    private String provider;
+
+    @JsonProperty("pubsub_token")
+    private String pubsubToken;
+
     private String role;
 
-    @JsonProperty("thumbnail")
-    private String thumbnail;
+    @JsonProperty("ui_settings")
+    private Map<String, Object> uiSettings;
 
-    @JsonProperty("custom_role_id")
-    private Long customRoleId;
+    private String uid;
+    private String type;
+
+    @JsonProperty("custom_attributes")
+    private Map<String, Object> customAttributes;
+
+    private List<ChatwootUserBO> accounts;
 
     // 错误信息
     private String error;

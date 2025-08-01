@@ -13,6 +13,7 @@ import com.example.hotelmanagement.util.ChatwootHttpClientUtil;
 import jakarta.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
@@ -23,59 +24,73 @@ public class ChatwootContactServiceImpl implements ChatwootContactService {
     @Resource
     private ChatwootHttpClientUtil chatwootHttpClientUtil;
 
+    @Value("${api.chatwoot.access.token}")
+    private String apiAccessToken;
+
+    @Value("${chatwoot.account.id}")
+    private Long accountId;
+
     @Override
     public ChatwootContactCreateResponse createContact(ChatwootContactCreateRequest request) {
-        String apiPath = "/api/v1/accounts/" + request.getInboxId() + "/contacts";
+        String apiPath = "/api/v1/accounts/" + accountId + "/contacts";
         logger.info("调用Chatwoot创建联系人接口: {}", apiPath);
         try {
-            ResponseEntity<ChatwootContactCreateResponse> response = chatwootHttpClientUtil.post(apiPath, request, ChatwootContactCreateResponse.class);
+            ResponseEntity<ChatwootContactCreateResponse> response = chatwootHttpClientUtil.post(apiPath, request, ChatwootContactCreateResponse.class, apiAccessToken);
             logResponse(response);
             return response.getBody();
         } catch (Exception e) {
             logger.error("调用Chatwoot创建联系人接口失败: {}, error: {}", apiPath, e.getMessage(), e);
-            return null;
+            ChatwootContactCreateResponse errResponse = new ChatwootContactCreateResponse();
+            errResponse.setError(e.getMessage());
+            return errResponse;
         }
     }
 
     @Override
     public ChatwootContactUpdateResponse updateContact(ChatwootContactUpdateRequest request) {
-        String apiPath = "/api/v1/accounts/" + request.getAccountId() + "/contacts/" + request.getId();
+        String apiPath = "/api/v1/accounts/" + accountId + "/contacts/" + request.getId();
         logger.info("调用Chatwoot更新联系人接口: {}", apiPath);
         try {
-            ResponseEntity<ChatwootContactUpdateResponse> response = chatwootHttpClientUtil.put(apiPath, request, ChatwootContactUpdateResponse.class);
+            ResponseEntity<ChatwootContactUpdateResponse> response = chatwootHttpClientUtil.put(apiPath, request, ChatwootContactUpdateResponse.class, apiAccessToken);
             logResponse(response);
             return response.getBody();
         } catch (Exception e) {
             logger.error("调用Chatwoot更新联系人接口失败: {}, error: {}", apiPath, e.getMessage(), e);
-            return null;
+            ChatwootContactUpdateResponse errResponse = new ChatwootContactUpdateResponse();
+            errResponse.setError(e.getMessage());
+            return errResponse;
         }
     }
 
     @Override
     public ChatwootContactDeleteResponse deleteContact(ChatwootContactDeleteRequest request) {
-        String apiPath = "/api/v1/accounts/" + request.getAccountId() + "/contacts/" + request.getContactId();
+        String apiPath = "/api/v1/accounts/" + accountId + "/contacts/" + request.getContactId();
         logger.info("调用Chatwoot删除联系人接口: {}", apiPath);
         try {
-            ResponseEntity<ChatwootContactDeleteResponse> response = chatwootHttpClientUtil.delete(apiPath, null, ChatwootContactDeleteResponse.class);
+            ResponseEntity<ChatwootContactDeleteResponse> response = chatwootHttpClientUtil.delete(apiPath, null, ChatwootContactDeleteResponse.class, apiAccessToken);
             logResponse(response);
             return response.getBody();
         } catch (Exception e) {
             logger.error("调用Chatwoot删除联系人接口失败: {}, error: {}", apiPath, e.getMessage(), e);
-            return null;
+            ChatwootContactDeleteResponse errResponse = new ChatwootContactDeleteResponse();
+            errResponse.setError(e.getMessage());
+            return errResponse;
         }
     }
 
     @Override
     public ChatwootContactDetailResponse contactDetail(ChatwootContactDetailRequest request) {
-        String apiPath = "/api/v1/accounts/" + request.getAccountId() + "/contacts/" + request.getContactId();
+        String apiPath = "/api/v1/accounts/" + accountId + "/contacts/" + request.getContactId();
         logger.info("调用Chatwoot获取联系人详情接口: {}", apiPath);
         try {
-            ResponseEntity<ChatwootContactDetailResponse> response = chatwootHttpClientUtil.get(apiPath, null, null, ChatwootContactDetailResponse.class);
+            ResponseEntity<ChatwootContactDetailResponse> response = chatwootHttpClientUtil.get(apiPath, null, null, ChatwootContactDetailResponse.class, apiAccessToken);
             logResponse(response);
             return response.getBody();
         } catch (Exception e) {
             logger.error("调用Chatwoot获取联系人详情接口失败: {}, error: {}", apiPath, e.getMessage(), e);
-            return null;
+            ChatwootContactDetailResponse errResponse = new ChatwootContactDetailResponse();
+            errResponse.setError(e.getMessage());
+            return errResponse;
         }
     }
 

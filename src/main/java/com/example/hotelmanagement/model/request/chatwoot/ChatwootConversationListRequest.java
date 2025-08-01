@@ -4,5 +4,8 @@ import lombok.Data;
 
 @Data
 public class ChatwootConversationListRequest {
-    private Long accountId;
+    private String accessToken;
+
+    private String label;
+    private String assigneeType;
 } 

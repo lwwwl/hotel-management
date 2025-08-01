@@ -26,47 +26,51 @@ public interface ChatwootFacadeService {
 
     /* -------------- 用户管理 -------------- */
 
-    ResponseEntity<?> createUser(ChatwootAddNewAgentRequest request);
+    ResponseEntity<?> createUser(ChatwootAddNewAgentRequest request, Long userId);
 
-    ResponseEntity<?> getUserDetail(ChatwootUserDetailRequest request);
+    ResponseEntity<?> getUserDetail(ChatwootUserDetailRequest request, Long userId);
 
-    ResponseEntity<?> updateUser(ChatwootUserUpdateRequest request);
+    ResponseEntity<?> updateUser(ChatwootUserUpdateRequest request, Long userId);
 
-    ResponseEntity<?> deleteUser(ChatwootUserDeleteRequest request);
+    ResponseEntity<?> deleteUser(ChatwootUserDeleteRequest request, Long userId);
 
     // -------------- 联系人管理 --------------
 
-    ResponseEntity<?> createContact(ChatwootContactCreateRequest request);
+    ResponseEntity<?> createContact(ChatwootContactCreateRequest request, Long userId);
 
-    ResponseEntity<?> updateContact(ChatwootContactUpdateRequest request);
+    ResponseEntity<?> updateContact(ChatwootContactUpdateRequest request, Long userId);
 
-    ResponseEntity<?> deleteContact(ChatwootContactDeleteRequest request);
+    ResponseEntity<?> deleteContact(ChatwootContactDeleteRequest request, Long userId);
 
-    ResponseEntity<?> contactDetail(ChatwootContactDetailRequest request);
+    ResponseEntity<?> contactDetail(ChatwootContactDetailRequest request, Long userId);
 
     // -------------- 会话管理 --------------
 
-    ResponseEntity<?> getConversationCount(ChatwootConversationCountRequest request);
+    // todo 获取会话未读数 /api/v1/inbox/{inbox_id}/conversations
 
-    ResponseEntity<?> getConversationList(ChatwootConversationListRequest request);
+    // todo 更新会话未读消息进度 POST /api/v1/accounts/{account_id}/conversations/{conversation_id}/update_last_seen
 
-    ResponseEntity<?> createConversation(ChatwootCreateConversationRequest request);
+    ResponseEntity<?> getConversationCount(ChatwootConversationCountRequest request, Long userId);
 
-    ResponseEntity<?> updateConversation(ChatwootUpdateConversationRequest request);
+    ResponseEntity<?> getConversationList(ChatwootConversationListRequest request, Long userId);
 
-    ResponseEntity<?> getConversationDetail(ChatwootConversationDetailRequest request);
+    ResponseEntity<?> createConversation(ChatwootCreateConversationRequest request, Long userId);
 
-    ResponseEntity<?> addConversationLabel(ChatwootAddConversationLabelRequest request);
+    ResponseEntity<?> updateConversation(ChatwootUpdateConversationRequest request, Long userId);
 
-    ResponseEntity<?> assignConversation(ChatwootAssignConversationRequest request);
+    ResponseEntity<?> getConversationDetail(ChatwootConversationDetailRequest request, Long userId);
 
-    ResponseEntity<?> updateConversationCustomAttributes(ChatwootUpdateConversationCustomAttributesRequest request);
+    ResponseEntity<?> addConversationLabel(ChatwootAddConversationLabelRequest request, Long userId);
 
-    ResponseEntity<?> toggleConversationStatus(ChatwootToggleConversationStatusRequest request);
+    ResponseEntity<?> assignConversation(ChatwootAssignConversationRequest request, Long userId);
+
+    ResponseEntity<?> updateConversationCustomAttributes(ChatwootUpdateConversationCustomAttributesRequest request, Long userId);
+
+    ResponseEntity<?> toggleConversationStatus(ChatwootToggleConversationStatusRequest request, Long userId);
 
     // -------------- 消息管理 --------------
 
-    ResponseEntity<?> createMessage(ChatwootCreateMessageRequest request);
+    ResponseEntity<?> createMessage(ChatwootCreateMessageRequest request, Long userId);
 
-    ResponseEntity<?> getMessages(ChatwootGetMessagesRequest request);
+    ResponseEntity<?> getMessages(ChatwootGetMessagesRequest request, Long userId);
 }

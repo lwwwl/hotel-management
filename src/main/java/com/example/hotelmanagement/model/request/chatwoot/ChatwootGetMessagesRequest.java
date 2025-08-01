@@ -4,6 +4,7 @@ import lombok.Data;
 
 @Data
 public class ChatwootGetMessagesRequest {
-    private Long accountId;
+    private String accessToken;
+
     private Long conversationId;
 } 

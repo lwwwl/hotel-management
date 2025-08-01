@@ -6,8 +6,9 @@ import java.util.Map;
 
 @Data
 public class ChatwootCreateConversationRequest {
+    private String accessToken;
+
     private String sourceId;
-    private Long inboxId;
     private Long contactId;
     private Map<String, Object> additionalAttributes;
     private Map<String, Object> customAttributes;

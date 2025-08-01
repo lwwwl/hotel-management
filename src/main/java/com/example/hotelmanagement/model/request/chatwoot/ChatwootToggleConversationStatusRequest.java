@@ -4,7 +4,8 @@ import lombok.Data;
 
 @Data
 public class ChatwootToggleConversationStatusRequest {
-    private Long accountId;
+    private String accessToken;
+
     private Long conversationId;
     private String status;
 } 

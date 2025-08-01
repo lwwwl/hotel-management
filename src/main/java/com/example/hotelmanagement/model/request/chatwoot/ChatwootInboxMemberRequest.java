@@ -4,18 +4,10 @@ import lombok.Data;
 
 @Data
 public class ChatwootInboxMemberRequest {
+    private String accessToken;
+
     /**
      * 用户ID
      */
     private Long userId;
-    
-    /**
-     * 账户ID
-     */
-    private Long accountId;
-    
-    /**
-     * 收件箱ID
-     */
-    private Long inboxId;
 } 

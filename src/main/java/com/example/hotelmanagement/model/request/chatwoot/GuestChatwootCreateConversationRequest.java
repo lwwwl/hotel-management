@@ -4,9 +4,8 @@ import lombok.Data;
 import java.util.Map;
 
 @Data
-public class ChatwootUpdateConversationCustomAttributesRequest {
-    private String accessToken;
-
-    private Long conversationId;
+public class GuestChatwootCreateConversationRequest {
+    private String inboxIdentifier;
+    private String contactIdentifier;
     private Map<String, Object> customAttributes;
 } 

@@ -7,6 +7,7 @@ import com.example.hotelmanagement.util.ChatwootHttpClientUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
@@ -15,6 +16,9 @@ public class ChatwootAccountServiceImpl implements ChatwootAccountService {
 
     private static final Logger logger = LoggerFactory.getLogger(ChatwootAccountServiceImpl.class);
     private final ChatwootHttpClientUtil chatwootHttpClientUtil;
+
+    @Value("${api.chatwoot.access.token}")
+    private String apiAccessToken;
 
     @Autowired
     public ChatwootAccountServiceImpl(ChatwootHttpClientUtil chatwootHttpClientUtil) {
@@ -27,13 +31,15 @@ public class ChatwootAccountServiceImpl implements ChatwootAccountService {
         logger.info("调用Chatwoot添加用户到账户接口: {}", apiPath);
         
         try {
-            ResponseEntity<ChatwootAddUserToAccountResponse> response = chatwootHttpClientUtil.post(apiPath, request, ChatwootAddUserToAccountResponse.class);
+            ResponseEntity<ChatwootAddUserToAccountResponse> response = chatwootHttpClientUtil.post(apiPath, request, ChatwootAddUserToAccountResponse.class, apiAccessToken);
             logResponse(response);
 
             return response.getBody();
         } catch (Exception e) {
             logger.error("调用Chatwoot添加用户到账户接口失败: {}, error: {}", apiPath, e.getMessage(), e);
-            return null;
+            ChatwootAddUserToAccountResponse errResponse = new ChatwootAddUserToAccountResponse();
+            errResponse.setError(e.getMessage());
+            return errResponse;
         }
     }
 

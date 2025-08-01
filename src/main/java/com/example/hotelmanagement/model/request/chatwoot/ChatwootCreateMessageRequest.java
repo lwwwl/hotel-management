@@ -5,7 +5,8 @@ import java.util.Map;
 
 @Data
 public class ChatwootCreateMessageRequest {
-    private Long accountId;
+    private String accessToken;
+
     private Long conversationId;
     private String content;
     private String messageType;

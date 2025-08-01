@@ -8,6 +8,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -19,17 +20,20 @@ public class ChatwootHttpClientUtil {
     private final RestTemplate restTemplate;
     private final String baseUrl;
     private final String apiAccessToken;
+    private final String apiPlatformAccessToken;
 
     @Autowired
-    public ChatwootHttpClientUtil(RestTemplate restTemplate, 
-                                 @Value("${api.chatwoot.baseUrl}") String baseUrl,
-                                 @Value("${api.chatwoot.accessToken:}") String apiAccessToken) {
+    public ChatwootHttpClientUtil(RestTemplate restTemplate,
+                                  @Value("${api.chatwoot.baseUrl}") String baseUrl,
+                                  @Value("${api.chatwoot.access.token}") String apiAccessToken,
+                                  @Value("${api.chatwoot.platform.access.token}") String apiPlatformAccessToken) {
         this.restTemplate = restTemplate;
         this.baseUrl = baseUrl;
         this.apiAccessToken = apiAccessToken;
+        this.apiPlatformAccessToken = apiPlatformAccessToken;
     }
 
-    public <T, R> ResponseEntity<R> get(String path, T requestBody, Map<String, String> queryParams, Class<R> responseType) {
+    public <T, R> ResponseEntity<R> get(String path, T requestBody, Map<String, String> queryParams, Class<R> responseType, String accessToken) {
         UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(baseUrl + path);
         
         // Add query parameters if provided
@@ -37,7 +41,7 @@ public class ChatwootHttpClientUtil {
             queryParams.forEach(builder::queryParam);
         }
         
-        HttpHeaders httpHeaders = createHeaders();
+        HttpHeaders httpHeaders = createHeaders(accessToken);
         
         HttpEntity<T> entity = new HttpEntity<>(requestBody, httpHeaders);
         
@@ -49,8 +53,8 @@ public class ChatwootHttpClientUtil {
         );
     }
 
-    public <T, R> ResponseEntity<R> post(String path, T requestBody, Class<R> responseType) {
-        HttpHeaders httpHeaders = createHeaders();
+    public <T, R> ResponseEntity<R> post(String path, T requestBody, Class<R> responseType, String accessToken) {
+        HttpHeaders httpHeaders = createHeaders(accessToken);
         
         HttpEntity<T> entity = new HttpEntity<>(requestBody, httpHeaders);
         
@@ -62,8 +66,8 @@ public class ChatwootHttpClientUtil {
         );
     }
 
-    public <T, R> ResponseEntity<R> put(String path, T requestBody, Class<R> responseType) {
-        HttpHeaders httpHeaders = createHeaders();
+    public <T, R> ResponseEntity<R> put(String path, T requestBody, Class<R> responseType, String accessToken) {
+        HttpHeaders httpHeaders = createHeaders(accessToken);
         
         HttpEntity<T> entity = new HttpEntity<>(requestBody, httpHeaders);
         
@@ -75,8 +79,8 @@ public class ChatwootHttpClientUtil {
         );
     }
 
-    public <T, R> ResponseEntity<R> patch(String path, T requestBody, Class<R> responseType) {
-        HttpHeaders httpHeaders = createHeaders();
+    public <T, R> ResponseEntity<R> patch(String path, T requestBody, Class<R> responseType, String accessToken) {
+        HttpHeaders httpHeaders = createHeaders(accessToken);
         
         HttpEntity<T> entity = new HttpEntity<>(requestBody, httpHeaders);
         
@@ -88,7 +92,7 @@ public class ChatwootHttpClientUtil {
         );
     }
 
-    public <R> ResponseEntity<R> delete(String path, Map<String, String> queryParams, Class<R> responseType) {
+    public <R> ResponseEntity<R> delete(String path, Map<String, String> queryParams, Class<R> responseType, String accessToken) {
         UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(baseUrl + path);
         
         // Add query parameters if provided
@@ -96,7 +100,7 @@ public class ChatwootHttpClientUtil {
             queryParams.forEach(builder::queryParam);
         }
         
-        HttpHeaders httpHeaders = createHeaders();
+        HttpHeaders httpHeaders = createHeaders(accessToken);
         
         HttpEntity<?> entity = new HttpEntity<>(httpHeaders);
         
@@ -108,15 +112,14 @@ public class ChatwootHttpClientUtil {
         );
     }
 
-    private HttpHeaders createHeaders() {
+    private HttpHeaders createHeaders(String accessToken) {
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.setContentType(MediaType.APPLICATION_JSON);
         
         // Add Chatwoot API access token if configured
-        if (apiAccessToken != null && !apiAccessToken.isEmpty()) {
-            httpHeaders.set("api_access_token", apiAccessToken);
+        if (StringUtils.hasText(accessToken)) {
+            httpHeaders.set("api_access_token", accessToken);
         }
-        
         return httpHeaders;
     }
 } 

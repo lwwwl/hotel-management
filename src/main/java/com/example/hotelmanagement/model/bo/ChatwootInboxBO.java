@@ -7,13 +7,16 @@ import java.io.Serializable;
 
 @Data
 public class ChatwootInboxBO implements Serializable {
+    @JsonProperty("id")
     private Long id;
     @JsonProperty("avatar_url")
     private String avatarUrl;
     @JsonProperty("channel_id")
     private Long channelId;
+    @JsonProperty("name")
     private String name;
     @JsonProperty("channel_type")
-    private String channelType;
+    private String channelType;    
+    @JsonProperty("provider")
     private String provider;
 }

@@ -13,6 +13,7 @@ import com.example.hotelmanagement.util.ChatwootHttpClientUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import jakarta.annotation.Resource;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
@@ -24,19 +25,25 @@ public class ChatwootUserServiceImpl implements ChatwootUserService {
     @Resource
     private ChatwootHttpClientUtil chatwootHttpClientUtil;
 
+    // 用户相关操作，只能使用platformAccessToken调用请求
+    @Value("${api.chatwoot.platform.access.token}")
+    private String platformAccessToken;
+
     @Override
     public ChatwootCreateUserResponse createUser(ChatwootAddNewAgentRequest request) {
         String apiPath = "/platform/api/v1/users";
         logger.info("调用Chatwoot创建用户接口: {}", apiPath);
         
         try {
-            ResponseEntity<ChatwootCreateUserResponse> response = chatwootHttpClientUtil.post(apiPath, request, ChatwootCreateUserResponse.class);
+            ResponseEntity<ChatwootCreateUserResponse> response = chatwootHttpClientUtil.post(apiPath, request, ChatwootCreateUserResponse.class, platformAccessToken);
             logResponse(response);
 
             return response.getBody();
         } catch (Exception e) {
             logger.error("调用Chatwoot创建用户接口失败: {}, error: {}", apiPath, e.getMessage(), e);
-            return null;
+            ChatwootCreateUserResponse errResponse = new ChatwootCreateUserResponse();
+            errResponse.setError(e.getMessage());
+            return errResponse;
         }
     }
 
@@ -46,13 +53,15 @@ public class ChatwootUserServiceImpl implements ChatwootUserService {
         logger.info("调用Chatwoot获取用户详情接口: {}", apiPath);
         
         try {
-            ResponseEntity<ChatwootUserDetailResponse> response = chatwootHttpClientUtil.get(apiPath, null, null, ChatwootUserDetailResponse.class);
+            ResponseEntity<ChatwootUserDetailResponse> response = chatwootHttpClientUtil.get(apiPath, null, null, ChatwootUserDetailResponse.class, platformAccessToken);
             logResponse(response);
 
             return response.getBody();
         } catch (Exception e) {
             logger.error("调用Chatwoot获取用户详情接口失败: {}, error: {}", apiPath, e.getMessage(), e);
-            return null;
+            ChatwootUserDetailResponse errResponse = new ChatwootUserDetailResponse();
+            errResponse.setError(e.getMessage());
+            return errResponse;
         }
     }
 
@@ -62,13 +71,15 @@ public class ChatwootUserServiceImpl implements ChatwootUserService {
         logger.info("调用Chatwoot更新用户接口: {}", apiPath);
         
         try {
-            ResponseEntity<ChatwootUserUpdateResponse> response = chatwootHttpClientUtil.patch(apiPath, request, ChatwootUserUpdateResponse.class);
+            ResponseEntity<ChatwootUserUpdateResponse> response = chatwootHttpClientUtil.patch(apiPath, request, ChatwootUserUpdateResponse.class, platformAccessToken);
             logResponse(response);
 
             return response.getBody();
         } catch (Exception e) {
             logger.error("调用Chatwoot更新用户接口失败: {}, error: {}", apiPath, e.getMessage(), e);
-            return null;
+            ChatwootUserUpdateResponse errResponse = new ChatwootUserUpdateResponse();
+            errResponse.setError(e.getMessage());
+            return errResponse;
         }
     }
 
@@ -78,13 +89,15 @@ public class ChatwootUserServiceImpl implements ChatwootUserService {
         logger.info("调用Chatwoot删除用户接口: {}", apiPath);
         // 用户关联的 Account, Inbox 等关联关系，会同步删除
         try {
-            ResponseEntity<ChatwootUserDeleteResponse> response = chatwootHttpClientUtil.delete(apiPath, null, ChatwootUserDeleteResponse.class);
+            ResponseEntity<ChatwootUserDeleteResponse> response = chatwootHttpClientUtil.delete(apiPath, null, ChatwootUserDeleteResponse.class, platformAccessToken);
             logResponse(response);
 
             return response.getBody();
         } catch (Exception e) {
             logger.error("调用Chatwoot删除用户接口失败: {}, error: {}", apiPath, e.getMessage(), e);
-            return null;
+            ChatwootUserDeleteResponse errResponse = new ChatwootUserDeleteResponse();
+            errResponse.setError(e.getMessage());
+            return errResponse;
         }
     }
 

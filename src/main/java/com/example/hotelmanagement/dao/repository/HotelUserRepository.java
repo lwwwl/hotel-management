@@ -3,6 +3,7 @@ package com.example.hotelmanagement.dao.repository;
 import com.example.hotelmanagement.dao.entity.HotelUser;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -76,4 +77,12 @@ public interface HotelUserRepository extends JpaRepository<HotelUser, Long> {
             @Param("lastCreateTime") Timestamp lastCreateTime,
             @Param("lastUserId") Long lastUserId,
             @Param("limit") int limit);
+
+
+    /**
+     * 根据userId更新cw_user_id, cw_api_access_token
+     */
+    @Modifying
+    @Query(value = "UPDATE hotel_users SET cw_user_id = :cwUserId, cw_api_access_token = :cwApiAccessToken WHERE id = :userId", nativeQuery = true)
+    void updateCwUserId(@Param("userId") Long userId, @Param("cwUserId") Long cwUserId, @Param("cwApiAccessToken") String cwApiAccessToken);
 } 

@@ -8,6 +8,7 @@ import com.example.hotelmanagement.util.ChatwootHttpClientUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
@@ -17,6 +18,9 @@ public class ChatwootInboxServiceImpl implements ChatwootInboxService {
     private static final Logger logger = LoggerFactory.getLogger(ChatwootInboxServiceImpl.class);
     private final ChatwootHttpClientUtil chatwootHttpClientUtil;
 
+    @Value("${chatwoot.account.id}")
+    private Long accountId;
+
     @Autowired
     public ChatwootInboxServiceImpl(ChatwootHttpClientUtil chatwootHttpClientUtil) {
         this.chatwootHttpClientUtil = chatwootHttpClientUtil;
@@ -24,17 +28,19 @@ public class ChatwootInboxServiceImpl implements ChatwootInboxService {
 
     @Override
     public ChatwootAddUserToInboxResponse addUserToInbox(ChatwootInboxMemberRequest request) {
-        String apiPath = "/api/v1/accounts/" + request.getAccountId() + "/inbox_members";
+        String apiPath = "/api/v1/accounts/" + accountId + "/inbox_members";
         logger.info("调用Chatwoot添加用户到收件箱接口: {}", apiPath);
         
         try {
-            ResponseEntity<ChatwootAddUserToInboxResponse> response = chatwootHttpClientUtil.post(apiPath, request, ChatwootAddUserToInboxResponse.class);
+            ResponseEntity<ChatwootAddUserToInboxResponse> response = chatwootHttpClientUtil.post(apiPath, request, ChatwootAddUserToInboxResponse.class, request.getAccessToken());
             logResponse(response);
             
             return response.getBody();
         } catch (Exception e) {
             logger.error("调用Chatwoot添加用户到收件箱接口失败: {}, error: {}", apiPath, e.getMessage(), e);
-            return null;
+            ChatwootAddUserToInboxResponse errResponse = new ChatwootAddUserToInboxResponse();
+            errResponse.setError(e.getMessage());
+            return errResponse;
         }
     }
 

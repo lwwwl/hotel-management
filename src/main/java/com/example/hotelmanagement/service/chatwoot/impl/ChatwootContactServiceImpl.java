@@ -30,6 +30,12 @@ public class ChatwootContactServiceImpl implements ChatwootContactService {
     @Value("${chatwoot.account.id}")
     private Long accountId;
 
+    /**
+     * Chatwoot侧创建contact唯一性检测：Email, Identifier, Phone number
+     * <br>Identifier传随机字符串，其余传null，可以跳过检测。
+     * @param request
+     * @return
+     */
     @Override
     public ChatwootContactCreateResponse createContact(ChatwootContactCreateRequest request) {
         String apiPath = "/api/v1/accounts/" + accountId + "/contacts";

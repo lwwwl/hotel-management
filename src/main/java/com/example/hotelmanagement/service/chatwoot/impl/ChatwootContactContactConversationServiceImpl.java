@@ -2,7 +2,7 @@ package com.example.hotelmanagement.service.chatwoot.impl;
 
 import com.example.hotelmanagement.model.request.chatwoot.*;
 import com.example.hotelmanagement.model.response.chatwoot.*;
-import com.example.hotelmanagement.service.chatwoot.GuestChatwootConversationService;
+import com.example.hotelmanagement.service.chatwoot.ChatwootContactConversationService;
 import com.example.hotelmanagement.util.ChatwootHttpClientUtil;
 import jakarta.annotation.Resource;
 import org.slf4j.Logger;
@@ -12,8 +12,8 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 
 @Service
-public class GuestChatwootConversationServiceImpl implements GuestChatwootConversationService {
-    private static final Logger logger = LoggerFactory.getLogger(GuestChatwootConversationServiceImpl.class);
+public class ChatwootContactContactConversationServiceImpl implements ChatwootContactConversationService {
+    private static final Logger logger = LoggerFactory.getLogger(ChatwootContactContactConversationServiceImpl.class);
 
     @Resource
     private ChatwootHttpClientUtil chatwootHttpClientUtil;

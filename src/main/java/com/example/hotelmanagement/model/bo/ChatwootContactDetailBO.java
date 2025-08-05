@@ -9,7 +9,7 @@ import java.util.Map;
 @Data
 public class ChatwootContactDetailBO implements Serializable {
     @JsonProperty("additional_attributes")
-    private Map<String, Object> additionalAttributes;    
+    private ChatwootAdditionalAttributes additionalAttributes;
     @JsonProperty("availability_status")
     private String availabilityStatus;
     @JsonProperty("email")

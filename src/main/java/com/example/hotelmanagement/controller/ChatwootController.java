@@ -20,7 +20,7 @@ import com.example.hotelmanagement.model.request.chatwoot.ChatwootUpdateConversa
 import com.example.hotelmanagement.model.request.chatwoot.ChatwootToggleConversationStatusRequest;
 import com.example.hotelmanagement.model.request.chatwoot.ChatwootCreateMessageRequest;
 import com.example.hotelmanagement.model.request.chatwoot.ChatwootGetMessagesRequest;
-import com.example.hotelmanagement.service.ChatwootFacadeService;
+import com.example.hotelmanagement.service.ChatwootUserFacadeService;
 import com.example.hotelmanagement.util.UserContext;
 import jakarta.annotation.Resource;
 import org.springframework.http.ResponseEntity;
@@ -33,109 +33,87 @@ import org.springframework.web.bind.annotation.*;
 public class ChatwootController {
 
     @Resource
-    private ChatwootFacadeService chatwootFacadeService;
+    private ChatwootUserFacadeService chatwootUserFacadeService;
 
     /* -------------- 用户管理 -------------- */
 
     @PostMapping("/create")
     public ResponseEntity<?> createUser(@RequestBody ChatwootAddNewAgentRequest request) {
-        return chatwootFacadeService.createUser(request, UserContext.getUserId());
+        return chatwootUserFacadeService.createUser(request, UserContext.getUserId());
     }
 
     @PostMapping("/detail")
     public ResponseEntity<?> getUserDetail(@RequestBody ChatwootUserDetailRequest request) {
-        return chatwootFacadeService.getUserDetail(request, UserContext.getUserId());
+        return chatwootUserFacadeService.getUserDetail(request, UserContext.getUserId());
     }
 
     @PostMapping("/update")
     public ResponseEntity<?> updateUser(@RequestBody ChatwootUserUpdateRequest request) {
-        return chatwootFacadeService.updateUser(request, UserContext.getUserId());
+        return chatwootUserFacadeService.updateUser(request, UserContext.getUserId());
     }
 
     @PostMapping("/delete")
     public ResponseEntity<?> deleteUser(@RequestBody ChatwootUserDeleteRequest request) {
-        return chatwootFacadeService.deleteUser(request, UserContext.getUserId());
-    }
-
-    /* -------------- 联系人管理 -------------- */
-
-    @PostMapping("/contact/create")
-    public ResponseEntity<?> createContact(@RequestBody ChatwootContactCreateRequest request) {
-        return chatwootFacadeService.createContact(request, UserContext.getUserId());
-    }
-
-    @PostMapping("/contact/update")
-    public ResponseEntity<?> updateContact(@RequestBody ChatwootContactUpdateRequest request) {
-        return chatwootFacadeService.updateContact(request, UserContext.getUserId());
-    }
-
-    @PostMapping("/contact/delete")
-    public ResponseEntity<?> deleteContact(@RequestBody ChatwootContactDeleteRequest request) {
-        return chatwootFacadeService.deleteContact(request, UserContext.getUserId());
-    }
-
-    @PostMapping("/contact/detail")
-    public ResponseEntity<?> contactDetail(@RequestBody ChatwootContactDetailRequest request) {
-        return chatwootFacadeService.contactDetail(request, UserContext.getUserId());
+        return chatwootUserFacadeService.deleteUser(request, UserContext.getUserId());
     }
 
     /* -------------- 会话管理 -------------- */
 
     @PostMapping("/conversation/count")
     public ResponseEntity<?> getConversationCount(@RequestBody ChatwootConversationCountRequest request) {
-        return chatwootFacadeService.getConversationCount(request, UserContext.getUserId());
+        return chatwootUserFacadeService.getConversationCount(request, UserContext.getUserId());
     }
 
-    @PostMapping("/conversation/list")
+    @PostMapping("/conversation-list")
     public ResponseEntity<?> getConversationList(@RequestBody ChatwootConversationListRequest request) {
-        return chatwootFacadeService.getConversationList(request, UserContext.getUserId());
+        return chatwootUserFacadeService.getConversationList(request, UserContext.getUserId());
     }
 
     @PostMapping("/conversation/create")
     public ResponseEntity<?> createConversation(@RequestBody ChatwootCreateConversationRequest request) {
-        return chatwootFacadeService.createConversation(request, UserContext.getUserId());
+        return chatwootUserFacadeService.createConversation(request, UserContext.getUserId());
     }
 
     @PostMapping("/conversation/update")
     public ResponseEntity<?> updateConversation(@RequestBody ChatwootUpdateConversationRequest request) {
-        return chatwootFacadeService.updateConversation(request, UserContext.getUserId());
+        return chatwootUserFacadeService.updateConversation(request, UserContext.getUserId());
     }
 
     @PostMapping("/conversation/detail")
     public ResponseEntity<?> getConversationDetail(@RequestBody ChatwootConversationDetailRequest request) {
-        return chatwootFacadeService.getConversationDetail(request, UserContext.getUserId());
+        return chatwootUserFacadeService.getConversationDetail(request, UserContext.getUserId());
     }
 
     @PostMapping("/conversation/add-label")
     public ResponseEntity<?> addConversationLabel(@RequestBody ChatwootAddConversationLabelRequest request) {
-        return chatwootFacadeService.addConversationLabel(request, UserContext.getUserId());
+        return chatwootUserFacadeService.addConversationLabel(request, UserContext.getUserId());
     }
 
     @PostMapping("/conversation/assign")
     public ResponseEntity<?> assignConversation(@RequestBody ChatwootAssignConversationRequest request) {
-        return chatwootFacadeService.assignConversation(request, UserContext.getUserId());
+        return chatwootUserFacadeService.assignConversation(request, UserContext.getUserId());
     }
 
     @PostMapping("/conversation/update-custom-attributes")
     public ResponseEntity<?> updateConversationCustomAttributes(@RequestBody ChatwootUpdateConversationCustomAttributesRequest request) {
-        return chatwootFacadeService.updateConversationCustomAttributes(request, UserContext.getUserId());
+        return chatwootUserFacadeService.updateConversationCustomAttributes(request, UserContext.getUserId());
     }
 
     @PostMapping("/conversation/toggle-status")
     public ResponseEntity<?> toggleConversationStatus(@RequestBody ChatwootToggleConversationStatusRequest request) {
-        return chatwootFacadeService.toggleConversationStatus(request, UserContext.getUserId());
+        return chatwootUserFacadeService.toggleConversationStatus(request, UserContext.getUserId());
     }
 
     /* -------------- 消息管理 -------------- */
 
-    @PostMapping("/message/create")
+    @PostMapping("/message-create")
     public ResponseEntity<?> createMessage(@RequestBody ChatwootCreateMessageRequest request) {
-        return chatwootFacadeService.createMessage(request, UserContext.getUserId());
+        return chatwootUserFacadeService.createMessage(request, UserContext.getUserId());
     }
 
-    @PostMapping("/message/list")
+    @PostMapping("/message-list")
     public ResponseEntity<?> getMessages(@RequestBody ChatwootGetMessagesRequest request) {
-        return chatwootFacadeService.getMessages(request, UserContext.getUserId());
+        return chatwootUserFacadeService.getMessages(request, UserContext.getUserId());
     }
 
 }

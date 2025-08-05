@@ -4,6 +4,8 @@ import lombok.Data;
 
 @Data
 public class ChatwootUserDeleteRequest {
+
+    private String accessToken;
     /**
      * 用户ID
      */

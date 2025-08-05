@@ -2,10 +2,11 @@ package com.example.hotelmanagement.service.chatwoot;
 
 import com.example.hotelmanagement.model.request.chatwoot.*;
 import com.example.hotelmanagement.model.response.chatwoot.*;
+import java.util.Map;
 
 public interface ChatwootMessageService {
 
-    ChatwootCreateMessageResponse createMessage(ChatwootCreateMessageRequest request);
+    Map<String, Object> createMessage(ChatwootCreateMessageRequest request);
 
-    ChatwootGetMessagesResponse getMessages(ChatwootGetMessagesRequest request);
+    Map<String, Object> getMessages(ChatwootGetMessagesRequest request);
 }

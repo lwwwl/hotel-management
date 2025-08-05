@@ -42,8 +42,8 @@ public class ChatwootConversationBO implements Serializable {
     private String status;
     @JsonProperty("created_at")
     private Long createdAt;
-    @JsonProperty("updated_at")
-    private Long updatedAt;
+//    @JsonProperty("updated_at")
+//    private Long updatedAt;
     @JsonProperty("timestamp")
     private String timestamp;
     @JsonProperty("first_reply_created_at")

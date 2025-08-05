@@ -6,6 +6,8 @@ import java.util.Map;
 
 @Data
 public class ChatwootContactUpdateRequest {
+    private String accessToken;
+
     @JsonProperty("account_id")
     private Long accountId;
     private Long id;

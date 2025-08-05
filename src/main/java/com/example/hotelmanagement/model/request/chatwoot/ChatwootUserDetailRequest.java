@@ -8,4 +8,5 @@ public class ChatwootUserDetailRequest {
      * 用户ID
      */
     private Long id;
+    private String accessToken;
 } 

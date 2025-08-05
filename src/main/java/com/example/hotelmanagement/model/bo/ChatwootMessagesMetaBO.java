@@ -15,7 +15,7 @@ public class ChatwootMessagesMetaBO implements Serializable {
     @JsonProperty("additional_attributes")
     private Map<String, Object> additionalAttributes;
     @JsonProperty("contact")
-    private ChatwootContactBO contact;
+    private ChatwootContactDetailBO contact;
     @JsonProperty("assignee")
     private ChatwootAssigneeBO assignee;
     @JsonProperty("agent_last_seen_at")

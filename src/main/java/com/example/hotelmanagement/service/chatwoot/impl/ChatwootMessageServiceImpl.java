@@ -11,6 +11,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
+import java.util.Map;
+
 @Service
 public class ChatwootMessageServiceImpl implements ChatwootMessageService {
     private static final Logger logger = LoggerFactory.getLogger(ChatwootMessageServiceImpl.class);
@@ -22,35 +25,41 @@ public class ChatwootMessageServiceImpl implements ChatwootMessageService {
     private Long accountId;
 
     @Override
-    public ChatwootCreateMessageResponse createMessage(ChatwootCreateMessageRequest request) {
+    public Map<String, Object> createMessage(ChatwootCreateMessageRequest request) {
         String apiPath = "/api/v1/accounts/" + accountId + "/conversations/" + request.getConversationId() + "/messages";
         logger.info("调用Chatwoot创建消息接口: {}", apiPath);
         try {
-            ResponseEntity<ChatwootCreateMessageResponse> response = chatwootHttpClientUtil.post(apiPath, request, ChatwootCreateMessageResponse.class, request.getAccessToken());
+            ResponseEntity<Map> response = chatwootHttpClientUtil.post(apiPath, request, Map.class, request.getAccessToken());
             logResponse(response);
             return response.getBody();
         } catch (Exception e) {
             logger.error("调用Chatwoot创建消息接口失败: {}, error: {}", apiPath, e.getMessage(), e);
-            ChatwootCreateMessageResponse errResponse = new ChatwootCreateMessageResponse();
-            errResponse.setError(e.getMessage());
+            Map<String, Object> errResponse = new HashMap<>();
+            errResponse.put("error", e.getMessage());
             return errResponse;
         }
     }
 
     @Override
-    public ChatwootGetMessagesResponse getMessages(ChatwootGetMessagesRequest request) {
-        // todo 额外增加after/before做游标分页
-
-        String apiPath = "/api/v1/accounts/" + accountId + "/conversations/" + request.getConversationId() + "/messages";
+    public Map<String, Object> getMessages(ChatwootGetMessagesRequest request) {
+        StringBuilder apiPath = new StringBuilder("/api/v1/accounts/" + accountId + "/conversations/" + request.getConversationId() + "/messages");
+        if (request.getBefore() != null || request.getAfter() != null) {
+            apiPath.append("?");
+        }
+        if  (request.getBefore() != null) {
+            apiPath.append("before=").append(request.getBefore());
+        } else if  (request.getAfter() != null) {
+            apiPath.append("after=").append(request.getAfter());
+        }
         logger.info("调用Chatwoot获取消息列表接口: {}", apiPath);
         try {
-            ResponseEntity<ChatwootGetMessagesResponse> response = chatwootHttpClientUtil.get(apiPath, null, null, ChatwootGetMessagesResponse.class, request.getAccessToken());
-            logResponse(response);
+            ResponseEntity<Map> response = chatwootHttpClientUtil.get(apiPath.toString(), null, null, Map.class, request.getAccessToken());
+            logger.info("Chatwoot获取消息列表接口返回: {}", response.getBody());
             return response.getBody();
         } catch (Exception e) {
             logger.error("调用Chatwoot获取消息列表接口失败: {}, error: {}", apiPath, e.getMessage(), e);
-            ChatwootGetMessagesResponse errResponse = new ChatwootGetMessagesResponse();
-            errResponse.setError(e.getMessage());
+            Map<String, Object> errResponse = new HashMap<>();
+            errResponse.put("error", e.getMessage());
             return errResponse;
         }
     }

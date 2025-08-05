@@ -23,9 +23,9 @@ public class ChatwootMessageBO implements Serializable {
     private Integer messageType;
     @JsonProperty("created_at")
     private Long createdAt;
-    @JsonProperty("updated_at")
-    private Long updatedAt;
-    @JsonProperty("is_private")
+//    @JsonProperty("updated_at")
+//    private Long updatedAt;
+    @JsonProperty("private")
     private Boolean isPrivate;
     @JsonProperty("status")
     private String status;

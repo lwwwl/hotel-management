@@ -6,4 +6,5 @@ import lombok.Data;
 public class ChatwootContactDetailRequest {
     private Long accountId;
     private Long contactId;
+    private String accessToken;
 }

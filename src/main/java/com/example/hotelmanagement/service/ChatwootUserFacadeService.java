@@ -4,10 +4,6 @@ import com.example.hotelmanagement.model.request.chatwoot.ChatwootAddNewAgentReq
 import com.example.hotelmanagement.model.request.chatwoot.ChatwootUserDeleteRequest;
 import com.example.hotelmanagement.model.request.chatwoot.ChatwootUserDetailRequest;
 import com.example.hotelmanagement.model.request.chatwoot.ChatwootUserUpdateRequest;
-import com.example.hotelmanagement.model.request.chatwoot.ChatwootContactCreateRequest;
-import com.example.hotelmanagement.model.request.chatwoot.ChatwootContactUpdateRequest;
-import com.example.hotelmanagement.model.request.chatwoot.ChatwootContactDeleteRequest;
-import com.example.hotelmanagement.model.request.chatwoot.ChatwootContactDetailRequest;
 import com.example.hotelmanagement.model.request.chatwoot.ChatwootConversationCountRequest;
 import com.example.hotelmanagement.model.request.chatwoot.ChatwootConversationListRequest;
 import com.example.hotelmanagement.model.request.chatwoot.ChatwootCreateConversationRequest;
@@ -22,7 +18,7 @@ import com.example.hotelmanagement.model.request.chatwoot.ChatwootGetMessagesReq
 
 import org.springframework.http.ResponseEntity;
 
-public interface ChatwootFacadeService {
+public interface ChatwootUserFacadeService {
 
     /* -------------- 用户管理 -------------- */
 
@@ -33,16 +29,6 @@ public interface ChatwootFacadeService {
     ResponseEntity<?> updateUser(ChatwootUserUpdateRequest request, Long userId);
 
     ResponseEntity<?> deleteUser(ChatwootUserDeleteRequest request, Long userId);
-
-    // -------------- 联系人管理 --------------
-
-    ResponseEntity<?> createContact(ChatwootContactCreateRequest request, Long userId);
-
-    ResponseEntity<?> updateContact(ChatwootContactUpdateRequest request, Long userId);
-
-    ResponseEntity<?> deleteContact(ChatwootContactDeleteRequest request, Long userId);
-
-    ResponseEntity<?> contactDetail(ChatwootContactDetailRequest request, Long userId);
 
     // -------------- 会话管理 --------------
 

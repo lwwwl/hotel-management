@@ -3,7 +3,6 @@ package com.example.hotelmanagement.service.impl;
 import com.example.hotelmanagement.dao.entity.HotelUser;
 import com.example.hotelmanagement.dao.repository.HotelGuestRepository;
 import com.example.hotelmanagement.dao.repository.HotelUserRepository;
-import com.example.hotelmanagement.model.bo.ChatwootContactBO;
 import com.example.hotelmanagement.model.bo.ChatwootContactDetailBO;
 import com.example.hotelmanagement.model.bo.ChatwootContactInboxBO;
 import com.example.hotelmanagement.model.request.chatwoot.*;
@@ -13,7 +12,7 @@ import com.example.hotelmanagement.model.response.chatwoot.ChatwootAddUserToInbo
 import com.example.hotelmanagement.model.response.chatwoot.ChatwootContactCreateResponse;
 import com.example.hotelmanagement.model.response.chatwoot.ChatwootCreateUserResponse;
 import com.example.hotelmanagement.model.response.chatwoot.ChatwootUserDeleteResponse;
-import com.example.hotelmanagement.service.ChatwootFacadeService;
+import com.example.hotelmanagement.service.ChatwootUserFacadeService;
 import com.example.hotelmanagement.service.chatwoot.*;
 import jakarta.annotation.Resource;
 import org.slf4j.Logger;
@@ -24,9 +23,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 @Service
-public class ChatwootFacadeServiceImpl implements ChatwootFacadeService {
+public class ChatwootUserFacadeServiceImpl implements ChatwootUserFacadeService {
 
-    private static final Logger logger = LoggerFactory.getLogger(ChatwootFacadeServiceImpl.class);
+    private static final Logger logger = LoggerFactory.getLogger(ChatwootUserFacadeServiceImpl.class);
 
     @Resource
     private ChatwootAccountService chatwootAccountService;
@@ -65,6 +64,7 @@ public class ChatwootFacadeServiceImpl implements ChatwootFacadeService {
         if (currentUser == null) {
             return ResponseEntity.badRequest().body("用户不存在");
         }
+        request.setAccessToken(currentUser.getCwApiAccessToken());
 
         logger.info("开始创建用户并关联到账户和收件箱: {}", request.getName());
 
@@ -87,6 +87,7 @@ public class ChatwootFacadeServiceImpl implements ChatwootFacadeService {
             logger.info("步骤2: 关联用户到收件箱");
             ChatwootInboxMemberRequest inboxMemberRequest = new ChatwootInboxMemberRequest();
             inboxMemberRequest.setUserId(cwUserId);
+            inboxMemberRequest.setAccessToken(currentUser.getCwApiAccessToken());
 
             ChatwootAddUserToInboxResponse addUserToInboxResponse = chatwootInboxService.addUserToInbox(inboxMemberRequest);
 
@@ -118,6 +119,8 @@ public class ChatwootFacadeServiceImpl implements ChatwootFacadeService {
             return ResponseEntity.badRequest().body("用户不存在");
         }
 
+        request.setAccessToken(currentUser.getCwApiAccessToken());
+
         return ResponseEntity.ok(chatwootUserService.getUserDetail(request));
     }
 
@@ -128,6 +131,8 @@ public class ChatwootFacadeServiceImpl implements ChatwootFacadeService {
             return ResponseEntity.badRequest().body("用户不存在");
         }
 
+        request.setAccessToken(currentUser.getCwApiAccessToken());
+
         return ResponseEntity.ok(chatwootUserService.updateUser(request));
     }
 
@@ -137,6 +142,7 @@ public class ChatwootFacadeServiceImpl implements ChatwootFacadeService {
         if (currentUser == null) {
             return ResponseEntity.badRequest().body("用户不存在");
         }
+        request.setAccessToken(currentUser.getCwApiAccessToken());
 
         ChatwootUserDeleteResponse userDeleteResponse = chatwootUserService.deleteUser(request);
         if (userDeleteResponse == null ||
@@ -146,68 +152,6 @@ public class ChatwootFacadeServiceImpl implements ChatwootFacadeService {
             return ResponseEntity.badRequest().body(errMsg);
         }
         return ResponseEntity.ok(ApiResponse.success(request.getId()));
-    }
-
-    @Override
-    public ResponseEntity<?> createContact(ChatwootContactCreateRequest request, Long userId) {
-        // todo 错误的，要引入guestId
-        HotelUser currentUser = getCurrentUser(userId);
-        if (currentUser == null) {
-            return ResponseEntity.badRequest().body("用户不存在");
-        }
-
-        // todo 之后还要加上拓展字段如房间号等
-        ChatwootContactCreateResponse contactCreateResponse = chatwootContactService.createContact(request);
-        if (contactCreateResponse == null ||
-                    StringUtils.hasText(contactCreateResponse.getError())) {
-            String errMsg = contactCreateResponse == null ? "" :  contactCreateResponse.getError();
-            logger.error("创建联系人失败: {}",  errMsg);
-            return ResponseEntity.badRequest().body(errMsg);
-        }
-        Long contactId = contactCreateResponse.getId();
-
-        String sourceId = safeGetSourceId(contactCreateResponse);
-        if (contactId == null || !StringUtils.hasText(sourceId)) {
-            logger.error("创建联系人成功但未获取到contactId或sourceId，响应内容: {}", contactCreateResponse);
-            return ResponseEntity.badRequest().body("创建联系人成功但未获取到contactId或sourceId");
-        }
-        // 更新guest表的chatwootContactId
-        guestRepository.updateChatwootContactIdAndResourceId(request.getGuestId(), contactId, sourceId);
-
-        CreateContactResponse createContactResponse = new CreateContactResponse();
-        createContactResponse.setContactId(contactId);
-        createContactResponse.setSourceId(sourceId);
-        return ResponseEntity.ok(ApiResponse.success(createContactResponse));
-    }
-
-    @Override
-    public ResponseEntity<?> updateContact(ChatwootContactUpdateRequest request, Long userId) {
-        HotelUser currentUser = getCurrentUser(userId);
-        if (currentUser == null) {
-            return ResponseEntity.badRequest().body("用户不存在");
-        }
-
-        return ResponseEntity.ok(chatwootContactService.updateContact(request));
-    }
-
-    @Override
-    public ResponseEntity<?> deleteContact(ChatwootContactDeleteRequest request, Long userId) {
-        HotelUser currentUser = getCurrentUser(userId);
-        if (currentUser == null) {
-            return ResponseEntity.badRequest().body("用户不存在");
-        }
-
-        return ResponseEntity.ok(chatwootContactService.deleteContact(request));
-    }
-
-    @Override
-    public ResponseEntity<?> contactDetail(ChatwootContactDetailRequest request, Long userId) {
-        HotelUser currentUser = getCurrentUser(userId);
-        if (currentUser == null) {
-            return ResponseEntity.badRequest().body("用户不存在");
-        }
-
-        return ResponseEntity.ok(chatwootContactService.contactDetail(request));
     }
 
     @Override
@@ -277,6 +221,8 @@ public class ChatwootFacadeServiceImpl implements ChatwootFacadeService {
             return ResponseEntity.badRequest().body("用户不存在");
         }
 
+        request.setAccessToken(currentUser.getCwApiAccessToken());
+
         return ResponseEntity.ok(chatwootConversationService.addConversationLabel(request));
     }
 
@@ -287,6 +233,8 @@ public class ChatwootFacadeServiceImpl implements ChatwootFacadeService {
             return ResponseEntity.badRequest().body("用户不存在");
         }
 
+        request.setAccessToken(currentUser.getCwApiAccessToken());
+
         return ResponseEntity.ok(chatwootConversationService.assignConversation(request));
     }
 
@@ -296,6 +244,7 @@ public class ChatwootFacadeServiceImpl implements ChatwootFacadeService {
         if (currentUser == null) {
             return ResponseEntity.badRequest().body("用户不存在");
         }
+        request.setAccessToken(currentUser.getCwApiAccessToken());
 
         return ResponseEntity.ok(chatwootConversationService.updateConversationCustomAttributes(request));
     }
@@ -306,6 +255,7 @@ public class ChatwootFacadeServiceImpl implements ChatwootFacadeService {
         if (currentUser == null) {
             return ResponseEntity.badRequest().body("用户不存在");
         }
+        request.setAccessToken(currentUser.getCwApiAccessToken());
 
         return ResponseEntity.ok(chatwootConversationService.toggleConversationStatus(request));
     }
@@ -316,6 +266,7 @@ public class ChatwootFacadeServiceImpl implements ChatwootFacadeService {
         if (currentUser == null) {
             return ResponseEntity.badRequest().body("用户不存在");
         }
+        request.setAccessToken(currentUser.getCwApiAccessToken());
 
         return ResponseEntity.ok(chatwootMessageService.createMessage(request));
     }
@@ -326,6 +277,7 @@ public class ChatwootFacadeServiceImpl implements ChatwootFacadeService {
         if (currentUser == null) {
             return ResponseEntity.badRequest().body("用户不存在");
         }
+        request.setAccessToken(currentUser.getCwApiAccessToken());
 
         return ResponseEntity.ok(chatwootMessageService.getMessages(request));
     }

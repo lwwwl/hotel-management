@@ -6,6 +6,7 @@ import java.util.Map;
 
 @Data
 public class ChatwootUserUpdateRequest {
+    private String accessToken;
     /**
      * 用户ID
      */

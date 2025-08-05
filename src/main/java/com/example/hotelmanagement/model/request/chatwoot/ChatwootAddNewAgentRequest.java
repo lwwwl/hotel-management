@@ -5,6 +5,7 @@ import lombok.Data;
 
 @Data
 public class ChatwootAddNewAgentRequest {
+    private String accessToken;
     /**
      * Full Name of the agent
      */

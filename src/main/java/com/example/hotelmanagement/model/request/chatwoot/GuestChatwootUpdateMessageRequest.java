@@ -5,7 +5,6 @@ import java.util.Map;
 
 @Data
 public class GuestChatwootUpdateMessageRequest {
-    private String inboxIdentifier;
     private String contactIdentifier;
     private Long conversationId;
     private String messageId;

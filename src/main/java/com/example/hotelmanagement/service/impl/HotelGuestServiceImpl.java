@@ -111,7 +111,7 @@ public class HotelGuestServiceImpl implements HotelGuestService {
         // 保存客人信息
         HotelGuest guest = new HotelGuest();
         guest.setGuestName(request.getGuestName());
-        guest.setRoom_id(room == null ? null : room.getId());
+        guest.setRoomName(room == null ? null : room.getName());
         guest.setPhoneSuffix(request.getPhoneSuffix());
         guest.setChatwootContactId(contactId);
         guest.setChatwootSourceId(sourceId);

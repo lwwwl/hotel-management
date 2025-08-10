@@ -28,9 +28,9 @@ public interface ChatwootGuestFacadeService {
 
     ResponseEntity<?> updateLastSeen(GuestChatwootUpdateLastSeenRequest request, Long guestId);
 
-    ResponseEntity<?> getMessages(GuestChatwootGetMessagesRequest request, Long guestId);
+    ResponseEntity<?> getMessages(Long guestId);
 
-    ResponseEntity<?> sendMessage(GuestChatwootSendMessageRequest request, Long guestId);
+    ResponseEntity<?> sendMessage(String content, Long guestId);
 
-    ResponseEntity<?> updateMessage(GuestChatwootUpdateMessageRequest request, Long guestId);
+//    ResponseEntity<?> updateMessage(GuestChatwootUpdateMessageRequest request, Long guestId);
 }

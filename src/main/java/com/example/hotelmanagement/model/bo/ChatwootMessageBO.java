@@ -42,7 +42,7 @@ public class ChatwootMessageBO implements Serializable {
     @JsonProperty("external_source_ids")
     private Map<String, Object> externalSourceIds;
     @JsonProperty("additional_attributes")
-    private Map<String, Object> additionalAttributes;
+    private ChatwootAdditionalAttributes additionalAttributes;
     @JsonProperty("processed_message_content")
     private String processedMessageContent;
     @JsonProperty("sentiment")
@@ -52,5 +52,5 @@ public class ChatwootMessageBO implements Serializable {
     @JsonProperty("attachment")
     private Map<String, Object> attachment;
     @JsonProperty("sender")
-    private Map<String, Object> sender;
+    private ChatwootSenderBO sender;
 } 

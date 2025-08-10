@@ -5,5 +5,6 @@ import com.example.hotelmanagement.model.bo.ChatwootMessageBO;
 
 @Data
 public class GuestChatwootSendMessageResponse extends ChatwootMessageBO {
+    private ChatwootMessageBO message;
     private String error;
 } 

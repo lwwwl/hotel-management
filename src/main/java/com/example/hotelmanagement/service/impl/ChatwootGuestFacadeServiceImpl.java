@@ -1,5 +1,7 @@
 package com.example.hotelmanagement.service.impl;
 
+import com.example.hotelmanagement.dao.entity.HotelGuest;
+import com.example.hotelmanagement.dao.repository.HotelGuestRepository;
 import com.example.hotelmanagement.model.bo.ChatwootContactDetailBO;
 import com.example.hotelmanagement.model.request.chatwoot.*;
 import com.example.hotelmanagement.model.response.chatwoot.*;
@@ -10,9 +12,13 @@ import com.example.hotelmanagement.service.chatwoot.ChatwootContactMessageServic
 import jakarta.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
+
+import java.util.List;
+import java.util.Map;
 
 @Service
 public class ChatwootGuestFacadeServiceImpl implements ChatwootGuestFacadeService {
@@ -28,6 +34,9 @@ public class ChatwootGuestFacadeServiceImpl implements ChatwootGuestFacadeServic
     @Resource
     private ChatwootContactMessageService chatwootContactMessageService;
 
+    @Resource
+    private HotelGuestRepository hotelGuestRepository;
+
     @Override
     public ChatwootContactDetailBO createContact(ChatwootContactCreateRequest request) {
         ChatwootContactCreateResponse contactCreateResponse = chatwootContactService.createContact(request);
@@ -41,7 +50,7 @@ public class ChatwootGuestFacadeServiceImpl implements ChatwootGuestFacadeServic
         if (contactCreateResponse.getPayload() == null) {
             return null;
         }
-        return contactCreateResponse.getPayload().getFirst();
+        return contactCreateResponse.getPayload().get(0);
     }
 
     @Override
@@ -106,30 +115,47 @@ public class ChatwootGuestFacadeServiceImpl implements ChatwootGuestFacadeServic
     }
 
     @Override
-    public ResponseEntity<?> getMessages(GuestChatwootGetMessagesRequest request, Long guestId) {
+    public ResponseEntity<?> getMessages(Long guestId) {
         if (guestId == null) {
             return ResponseEntity.badRequest().body("访客ID不能为空");
         }
-        var response = chatwootContactMessageService.getMessages(request, guestId);
+        HotelGuest hotelGuest = hotelGuestRepository.findById(guestId).orElse(null);
+        if (hotelGuest == null) {
+            return ResponseEntity.badRequest().body("访客ID不存在");
+        }
+        GuestChatwootGetMessagesRequest request = new GuestChatwootGetMessagesRequest();
+        request.setContactIdentifier(hotelGuest.getChatwootSourceId());
+        request.setConversationId(hotelGuest.getChatwootConversationId());
+
+        Map<String, Object> response = chatwootContactMessageService.getMessages(request);
         return ResponseEntity.ok(response);
     }
 
     @Override
-    public ResponseEntity<?> sendMessage(GuestChatwootSendMessageRequest request, Long guestId) {
+    public ResponseEntity<?> sendMessage(String content, Long guestId) {
         if (guestId == null) {
             return ResponseEntity.badRequest().body("访客ID不能为空");
         }
-        var response = chatwootContactMessageService.sendMessage(request, guestId);
+        HotelGuest hotelGuest = hotelGuestRepository.findById(guestId).orElse(null);
+        if (hotelGuest == null) {
+            return ResponseEntity.badRequest().body("访客ID不存在");
+        }
+        GuestChatwootSendMessageRequest request = new  GuestChatwootSendMessageRequest();
+        request.setContactIdentifier(hotelGuest.getChatwootSourceId());
+        request.setConversationId(hotelGuest.getChatwootConversationId());
+        request.setContent(content);
+
+        Map<String, Object> response = chatwootContactMessageService.sendMessage(request);
         return ResponseEntity.ok(response);
     }
 
-    @Override
-    public ResponseEntity<?> updateMessage(GuestChatwootUpdateMessageRequest request, Long guestId) {
-        if (guestId == null) {
-            return ResponseEntity.badRequest().body("访客ID不能为空");
-        }
-        var response = chatwootContactMessageService.updateMessage(request, guestId);
-        return ResponseEntity.ok(response);
-    }
+//    @Override
+//    public ResponseEntity<?> updateMessage(GuestChatwootUpdateMessageRequest request, Long guestId) {
+//        if (guestId == null) {
+//            return ResponseEntity.badRequest().body("访客ID不能为空");
+//        }
+//        var response = chatwootContactMessageService.updateMessage(request);
+//        return ResponseEntity.ok(response);
+//    }
     
 }

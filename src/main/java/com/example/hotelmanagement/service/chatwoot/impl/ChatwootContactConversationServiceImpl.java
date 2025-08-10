@@ -12,8 +12,8 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 
 @Service
-public class ChatwootContactContactConversationServiceImpl implements ChatwootContactConversationService {
-    private static final Logger logger = LoggerFactory.getLogger(ChatwootContactContactConversationServiceImpl.class);
+public class ChatwootContactConversationServiceImpl implements ChatwootContactConversationService {
+    private static final Logger logger = LoggerFactory.getLogger(ChatwootContactConversationServiceImpl.class);
 
     @Resource
     private ChatwootHttpClientUtil chatwootHttpClientUtil;

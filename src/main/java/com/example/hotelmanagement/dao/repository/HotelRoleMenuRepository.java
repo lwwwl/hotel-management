@@ -1,12 +1,13 @@
 package com.example.hotelmanagement.dao.repository;
 
-import com.example.hotelmanagement.dao.entity.HotelRoleMenu;
+import java.util.List;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
+import com.example.hotelmanagement.dao.entity.HotelRoleMenu;
 
 @Repository
 public interface HotelRoleMenuRepository extends JpaRepository<HotelRoleMenu, Long> {
@@ -38,4 +39,10 @@ public interface HotelRoleMenuRepository extends JpaRepository<HotelRoleMenu, Lo
      */
     @Query(value = "SELECT rm FROM HotelRoleMenu rm WHERE rm.roleId IN :roleIds AND rm.menuId = :menuId")
     List<HotelRoleMenu> findByRoleIdsAndMenuId(@Param("roleIds") List<Long> roleIds, @Param("menuId") Long menuId);
+
+    /**
+     * Find menu IDs by multiple role IDs
+     */
+    @Query(value = "SELECT rm.menuId FROM HotelRoleMenu rm WHERE rm.roleId IN :roleIds")
+    List<Long> findMenuIdsByRoleIds(@Param("roleIds") List<Long> roleIds);
 } 

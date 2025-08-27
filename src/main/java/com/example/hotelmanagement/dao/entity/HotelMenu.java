@@ -1,11 +1,17 @@
 package com.example.hotelmanagement.dao.entity;
 
-import jakarta.persistence.*;
-import lombok.Data;
+import java.sql.Timestamp;
+
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
-import java.sql.Timestamp;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import lombok.Data;
 
 /**
  * 菜单表实体
@@ -47,6 +53,12 @@ public class HotelMenu {
     private String component;
 
     /**
+     * 权限标识
+     */
+    @Column(name = "perms", length = 200)
+    private String perms;
+
+    /**
      * 菜单类型（0-目录，1-菜单，2-按钮）
      */
     @Column(name = "type", nullable = false)
@@ -69,6 +81,12 @@ public class HotelMenu {
      */
     @Column(name = "visible")
     private Boolean visible;
+
+    /**
+     * 备注
+     */
+    @Column(name = "remark", length = 200)
+    private String remark;
 
     /**
      * 创建时间

@@ -1,11 +1,12 @@
 package com.example.hotelmanagement.dao.repository;
 
-import com.example.hotelmanagement.dao.entity.HotelMenu;
+import java.util.List;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
+import com.example.hotelmanagement.dao.entity.HotelMenu;
 
 @Repository
 public interface HotelMenuRepository extends JpaRepository<HotelMenu, Long> {
@@ -35,4 +36,9 @@ public interface HotelMenuRepository extends JpaRepository<HotelMenu, Long> {
      * Find menus by path
      */
     List<HotelMenu> findByPathLike(String path);
+
+    /**
+     * Find menus by multiple parent IDs
+     */
+    List<HotelMenu> findByParentIdInOrderBySortOrderAsc(List<Long> parentIds);
 } 

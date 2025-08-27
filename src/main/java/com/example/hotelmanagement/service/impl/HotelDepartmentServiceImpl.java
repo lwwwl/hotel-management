@@ -155,7 +155,7 @@ public class HotelDepartmentServiceImpl implements HotelDepartmentService {
         for (Long userId : userIds) {
             // 检查是否已存在
             List<HotelUserDepartment> exists = userDepartmentRepository.findByDeptId(deptId).stream()
-                    .filter(ud -> ud.getUserId().equals(userId)).collect(Collectors.toList());
+                    .filter(ud -> ud.getUserId().equals(userId)).toList();
             if (exists.isEmpty()) {
                 HotelUserDepartment ud = new HotelUserDepartment();
                 ud.setDeptId(deptId);
@@ -173,7 +173,7 @@ public class HotelDepartmentServiceImpl implements HotelDepartmentService {
     public ResponseEntity<?> removeDeptUser(DeptRemoveUserRequest request) {
         // 获取部门所有成员，过滤出存在的待移除成员
         List<HotelUserDepartment> allUserDepts = userDepartmentRepository.findByDeptId(request.getDeptId());
-        List<Long> userIds = allUserDepts.stream().map(HotelUserDepartment::getUserId).collect(Collectors.toList());
+        List<Long> userIds = allUserDepts.stream().map(HotelUserDepartment::getUserId).toList();
         List<Long> removeUserIds = request.getUserIdList().stream().filter(userId -> userIds.contains(userId)).collect(Collectors.toList());
         if (removeUserIds.isEmpty()) {
             return ResponseEntity.ok(ApiResponse.error(400, "没有待移除成员", ""));

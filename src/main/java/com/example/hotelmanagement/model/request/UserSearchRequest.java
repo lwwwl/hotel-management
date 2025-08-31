@@ -14,7 +14,7 @@ public class UserSearchRequest {
     private Short active;
     
     // 游标分页参数
-    private Timestamp lastCreateTime; // 上一页最后一条记录的创建时间
+    private Long lastCreateTime; // 上一页最后一条记录的创建时间
     private Long lastUserId;          // 上一页最后一条记录的用户ID
     private Integer size = 50;        // 每页大小
 } 

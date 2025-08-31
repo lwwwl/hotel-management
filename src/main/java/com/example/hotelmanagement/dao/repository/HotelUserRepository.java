@@ -61,22 +61,25 @@ public interface HotelUserRepository extends JpaRepository<HotelUser, Long> {
      * @return 符合条件的用户列表
      */
     @Query(value = "SELECT DISTINCT u.* FROM hotel_users u " +
-           "LEFT JOIN hotel_user_department ud ON u.id = ud.user_id " +
-           "WHERE (:keyword IS NULL OR u.username LIKE %:keyword% OR u.employee_number LIKE %:keyword% OR u.display_name LIKE %:keyword%) " +
-           "AND (:deptId IS NULL OR ud.dept_id = :deptId) " +
-           "AND (:active IS NULL OR u.active = :active) " +
-           "AND (:lastCreateTime IS NULL OR u.create_time > :lastCreateTime " +
-           "     OR (u.create_time = :lastCreateTime AND u.id > :lastUserId)) " +
-           "ORDER BY u.create_time ASC, u.id ASC " +
-           "LIMIT :limit", 
-           nativeQuery = true)
+            "LEFT JOIN hotel_user_department ud ON u.id = ud.user_id " +
+            "WHERE (:keyword IS NULL OR u.username LIKE %:keyword% " +
+            "       OR u.employee_number LIKE %:keyword% " +
+            "       OR u.display_name LIKE %:keyword%) " +
+            "AND (CAST(:deptId AS bigint) IS NULL OR ud.dept_id = CAST(:deptId AS bigint)) " +
+            "AND (CAST(:active AS smallint) IS NULL OR u.active = CAST(:active AS smallint)) " +
+            "AND (CAST(:lastCreateTime AS timestamp) IS NULL OR u.create_time > CAST(:lastCreateTime AS timestamp) " +
+            "     OR (u.create_time = CAST(:lastCreateTime AS timestamp) AND u.id > :lastUserId)) " +
+            "ORDER BY u.create_time ASC, u.id ASC " +
+            "LIMIT :limit",
+            nativeQuery = true)
     List<HotelUser> searchUsers(
-            @Param("keyword") String keyword, 
-            @Param("deptId") Long deptId, 
+            @Param("keyword") String keyword,
+            @Param("deptId") Long deptId,
             @Param("active") Short active,
             @Param("lastCreateTime") Timestamp lastCreateTime,
             @Param("lastUserId") Long lastUserId,
             @Param("limit") int limit);
+
 
 
     /**

@@ -65,7 +65,7 @@ public class HotelUserServiceImpl implements HotelUserService {
             Short active = request.getActive();
             
             // 获取游标参数
-            Timestamp lastCreateTime = request.getLastCreateTime();
+            Timestamp lastCreateTime = request.getLastCreateTime() == null ? null : new Timestamp(request.getLastCreateTime());
             Long lastUserId = request.getLastUserId();
             int size = request.getSize() != null ? request.getSize() : 10;
             
@@ -434,7 +434,7 @@ public class HotelUserServiceImpl implements HotelUserService {
         // 设置游标信息，用于下一页查询
         if (!users.isEmpty()) {
             HotelUser lastUser = users.get(users.size() - 1);
-            response.setLastCreateTime(lastUser.getCreateTime());
+            response.setLastCreateTime(lastUser.getCreateTime().getTime());
             response.setLastUserId(lastUser.getId());
             response.setHasMore(hasMore); // 如果返回的记录数等于或超过要求的大小，则可能还有更多数据
         } else {

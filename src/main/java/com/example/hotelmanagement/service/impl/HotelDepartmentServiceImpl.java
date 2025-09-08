@@ -1,5 +1,16 @@
 package com.example.hotelmanagement.service.impl;
 
+import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
+
 import com.example.hotelmanagement.dao.entity.HotelDepartment;
 import com.example.hotelmanagement.dao.entity.HotelUser;
 import com.example.hotelmanagement.dao.entity.HotelUserDepartment;
@@ -7,18 +18,26 @@ import com.example.hotelmanagement.dao.repository.HotelDepartmentRepository;
 import com.example.hotelmanagement.dao.repository.HotelUserDepartmentRepository;
 import com.example.hotelmanagement.dao.repository.HotelUserRepository;
 import com.example.hotelmanagement.model.bo.DeptListItemBO;
-import com.example.hotelmanagement.model.request.*;
-import com.example.hotelmanagement.model.response.*;
+import com.example.hotelmanagement.model.request.DeptAddUserRequest;
+import com.example.hotelmanagement.model.request.DeptCreateRequest;
+import com.example.hotelmanagement.model.request.DeptDeleteRequest;
+import com.example.hotelmanagement.model.request.DeptDetailRequest;
+import com.example.hotelmanagement.model.request.DeptListRequest;
+import com.example.hotelmanagement.model.request.DeptRemoveUserRequest;
+import com.example.hotelmanagement.model.request.DeptSelectListRequest;
+import com.example.hotelmanagement.model.request.DeptUpdateRequest;
+import com.example.hotelmanagement.model.response.ApiResponse;
+import com.example.hotelmanagement.model.response.DeptDetailResponse;
+import com.example.hotelmanagement.model.response.DeptInfo;
+import com.example.hotelmanagement.model.response.DeptListResponse;
+import com.example.hotelmanagement.model.response.DeptSelectListResponse;
+import com.example.hotelmanagement.model.response.DeptUserInfo;
 import com.example.hotelmanagement.service.HotelDepartmentService;
-import jakarta.annotation.Resource;
-import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.stream.Collectors;
+import jakarta.annotation.Resource;
+import jakarta.transaction.Transactional;
+import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 
 @Service
 public class HotelDepartmentServiceImpl implements HotelDepartmentService {
@@ -130,13 +149,19 @@ public class HotelDepartmentServiceImpl implements HotelDepartmentService {
             return ResponseEntity.badRequest().body("部门不存在");
         }
         HotelDepartment dept = deptOpt.get();
-        dept.setName(request.getDeptName());
-        dept.setLeaderUserId(request.getLeaderId());
+        if (StringUtils.hasText(request.getDeptName())) {
+            dept.setName(request.getDeptName());
+        }
+        if (request.getLeaderId() != null && !Objects.equals(request.getLeaderId(), dept.getLeaderUserId())) {
+            addDeptUser(List.of(request.getLeaderId()), dept);
+            dept.setLeaderUserId(request.getLeaderId());
+        }
         departmentRepository.save(dept);
         return ResponseEntity.ok(ApiResponse.success("更新成功"));
     }
 
     @Override
+    @Transactional
     public ResponseEntity<?> deleteDept(DeptDeleteRequest request) {
         departmentRepository.deleteById(request.getDeptId());
         userDepartmentRepository.deleteByDeptId(request.getDeptId());
@@ -152,24 +177,34 @@ public class HotelDepartmentServiceImpl implements HotelDepartmentService {
         }
         HotelDepartment dept = deptOpt.get();
         List<Long> userIds = request.getUserIdList();
+        addDeptUser(userIds, dept);
+        return ResponseEntity.ok(ApiResponse.success("添加成功"));
+    }
+
+    private void addDeptUser(List<Long> userIds, HotelDepartment dept) {
+        if (CollectionUtils.isEmpty(userIds)) {
+            return;
+        }
         for (Long userId : userIds) {
             // 检查是否已存在
-            List<HotelUserDepartment> exists = userDepartmentRepository.findByDeptId(deptId).stream()
+            List<HotelUserDepartment> exists = userDepartmentRepository.findByDeptId(dept.getId()).stream()
                     .filter(ud -> ud.getUserId().equals(userId)).toList();
             if (exists.isEmpty()) {
                 HotelUserDepartment ud = new HotelUserDepartment();
-                ud.setDeptId(deptId);
+                ud.setDeptId(dept.getId());
                 ud.setUserId(userId);
+                ud.setCreateTime(new Timestamp(System.currentTimeMillis()));
+                ud.setUpdateTime(new Timestamp(System.currentTimeMillis()));
                 userDepartmentRepository.save(ud);
                 // 部门人数更新
                 dept.setMemberCount(dept.getMemberCount() + 1);
                 departmentRepository.save(dept);
             }
         }
-        return ResponseEntity.ok(ApiResponse.success("添加成功"));
     }
 
     @Override
+    @Transactional
     public ResponseEntity<?> removeDeptUser(DeptRemoveUserRequest request) {
         // 获取部门所有成员，过滤出存在的待移除成员
         List<HotelUserDepartment> allUserDepts = userDepartmentRepository.findByDeptId(request.getDeptId());

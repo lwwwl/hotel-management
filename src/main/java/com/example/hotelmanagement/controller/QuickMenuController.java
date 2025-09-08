@@ -12,6 +12,7 @@ import com.example.hotelmanagement.aop.annotation.RequireUserId;
 import com.example.hotelmanagement.model.request.QuickMenuCreateRequest;
 import com.example.hotelmanagement.model.request.QuickMenuDeleteRequest;
 import com.example.hotelmanagement.model.request.QuickMenuListRequest;
+import com.example.hotelmanagement.model.request.QuickMenuSaveOrderRequest;
 import com.example.hotelmanagement.model.request.QuickMenuUpdateRequest;
 import com.example.hotelmanagement.service.HotelQuickMenuService;
 
@@ -46,6 +47,12 @@ public class QuickMenuController {
     @PostMapping("/list")
     public ResponseEntity<?> list(@RequestBody QuickMenuListRequest request) {
         return quickMenuService.list(request);
+    }
+
+    /** 保存排序 */
+    @PostMapping("/save-order")
+    public ResponseEntity<?> saveOrder(@RequestBody QuickMenuSaveOrderRequest request) {
+        return quickMenuService.saveOrder(request);
     }
 }
 

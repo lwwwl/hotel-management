@@ -5,6 +5,7 @@ import org.springframework.http.ResponseEntity;
 import com.example.hotelmanagement.model.request.QuickMenuCreateRequest;
 import com.example.hotelmanagement.model.request.QuickMenuDeleteRequest;
 import com.example.hotelmanagement.model.request.QuickMenuListRequest;
+import com.example.hotelmanagement.model.request.QuickMenuSaveOrderRequest;
 import com.example.hotelmanagement.model.request.QuickMenuUpdateRequest;
 
 public interface HotelQuickMenuService {
@@ -20,6 +21,9 @@ public interface HotelQuickMenuService {
 
     /** 列出所有快捷菜单 */
     ResponseEntity<?> list(QuickMenuListRequest request);
+
+    /** 保存排序 */
+    ResponseEntity<?> saveOrder(QuickMenuSaveOrderRequest request);
 }
 
 

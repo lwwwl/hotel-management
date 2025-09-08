@@ -1,12 +1,13 @@
 package com.example.hotelmanagement.dao.repository;
 
-import com.example.hotelmanagement.dao.entity.HotelUserRole;
+import java.util.List;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
+import com.example.hotelmanagement.dao.entity.HotelUserRole;
 
 @Repository
 public interface HotelUserRoleRepository extends JpaRepository<HotelUserRole, Long> {
@@ -32,4 +33,10 @@ public interface HotelUserRoleRepository extends JpaRepository<HotelUserRole, Lo
      */
     @Query(value = "SELECT ur.roleId FROM HotelUserRole ur WHERE ur.userId = :userId")
     List<Long> findRoleIdsByUserId(@Param("userId") Long userId);
+    
+    /**
+     * Find user role relations by user ID list
+     */
+    @Query(value = "SELECT ur FROM HotelUserRole ur WHERE ur.userId IN :userIds")
+    List<HotelUserRole> findByUserIdIn(@Param("userIds") List<Long> userIds);
 } 

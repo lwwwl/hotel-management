@@ -18,5 +18,4 @@ public class UserUpdateRequest {
     private String phone;
     private List<Long> roleIds;
     private Long deptId;
-    private Boolean superAdmin;
-} 
+}

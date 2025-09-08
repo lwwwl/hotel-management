@@ -10,7 +10,6 @@ import java.util.List;
 @Data
 public class UserCreateRequest {
     private String username;
-    private String password;
     private String displayName;
     private String employeeNumber;
     private String email;

@@ -1,5 +1,23 @@
 package com.example.hotelmanagement.service.impl;
 
+import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.Base64;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
+
+import com.example.hotelmanagement.constant.UserConstant;
 import com.example.hotelmanagement.dao.entity.HotelDepartment;
 import com.example.hotelmanagement.dao.entity.HotelRole;
 import com.example.hotelmanagement.dao.entity.HotelUser;
@@ -10,30 +28,24 @@ import com.example.hotelmanagement.dao.repository.HotelRoleRepository;
 import com.example.hotelmanagement.dao.repository.HotelUserDepartmentRepository;
 import com.example.hotelmanagement.dao.repository.HotelUserRepository;
 import com.example.hotelmanagement.dao.repository.HotelUserRoleRepository;
-import com.example.hotelmanagement.model.request.*;
+import com.example.hotelmanagement.model.request.UserCreateRequest;
+import com.example.hotelmanagement.model.request.UserDeleteRequest;
+import com.example.hotelmanagement.model.request.UserDetailRequest;
+import com.example.hotelmanagement.model.request.UserLockRequest;
+import com.example.hotelmanagement.model.request.UserSearchRequest;
+import com.example.hotelmanagement.model.request.UserUpdateRequest;
 import com.example.hotelmanagement.model.response.ApiResponse;
 import com.example.hotelmanagement.model.response.UserDepartmentInfo;
 import com.example.hotelmanagement.model.response.UserDetailResponse;
 import com.example.hotelmanagement.model.response.UserItem;
 import com.example.hotelmanagement.model.response.UserListResponse;
+import com.example.hotelmanagement.model.response.UserRole;
 import com.example.hotelmanagement.model.response.UserRoleInfo;
 import com.example.hotelmanagement.service.HotelUserService;
+
 import jakarta.annotation.Resource;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
-import jakarta.persistence.criteria.CriteriaBuilder;
-import jakarta.persistence.criteria.CriteriaQuery;
-import jakarta.persistence.criteria.Predicate;
-import jakarta.persistence.criteria.Root;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.StringUtils;
-
-import java.sql.Timestamp;
-import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 public class HotelUserServiceImpl implements HotelUserService {
@@ -121,17 +133,18 @@ public class HotelUserServiceImpl implements HotelUserService {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body(ApiResponse.error(400, "创建用户失败", "工号已存在"));
             }
+
+            String password = UserConstant.INIT_PASSWORD;
             
             // 创建用户
             HotelUser user = new HotelUser();
             user.setUsername(request.getUsername());
             // 简单的密码编码 - 在生产环境中，使用适当的密码编码器
-            user.setPassword(Base64.getEncoder().encodeToString(request.getPassword().getBytes()));
+            user.setPassword(Base64.getEncoder().encodeToString(password.getBytes()));
             user.setDisplayName(request.getDisplayName());
             user.setEmployeeNumber(request.getEmployeeNumber());
             user.setEmail(request.getEmail());
             user.setPhone(request.getPhone());
-            user.setSuperAdmin(request.getSuperAdmin() != null ? request.getSuperAdmin() : false);
             user.setActive((short) 1); // 默认激活
             user.setCreateTime(new Timestamp(System.currentTimeMillis()));
             user.setUpdateTime(new Timestamp(System.currentTimeMillis()));
@@ -220,6 +233,10 @@ public class HotelUserServiceImpl implements HotelUserService {
             
             if (StringUtils.hasText(request.getPhone())) {
                 user.setPhone(request.getPhone());
+            }
+
+            if (StringUtils.hasText(request.getPassword())) {
+                user.setPassword(Base64.getEncoder().encodeToString(request.getPassword().getBytes()));
             }
             
             user.setUpdateTime(new Timestamp(System.currentTimeMillis()));
@@ -332,7 +349,6 @@ public class HotelUserServiceImpl implements HotelUserService {
         response.setEmployeeNumber(user.getEmployeeNumber());
         response.setEmail(user.getEmail());
         response.setPhone(user.getPhone());
-        response.setSuperAdmin(user.getSuperAdmin());
         response.setActive(user.getActive());
         
         // 获取部门信息 - 只取第一个部门作为用户所属部门
@@ -404,6 +420,32 @@ public class HotelUserServiceImpl implements HotelUserService {
             depts.forEach(dept -> deptMap.put(dept.getId(), dept));
         }
         
+        // 获取所有用户的角色关联信息 - 优化查询，根据用户ID列表查询
+        Map<Long, List<HotelUserRole>> userRolesMap = new HashMap<>();
+        if (!userIds.isEmpty()) {
+            // 根据用户ID列表查询角色关联
+            List<HotelUserRole> userRoles = userRoleRepository.findByUserIdIn(userIds);
+            
+            // 按用户ID分组
+            for (HotelUserRole ur : userRoles) {
+                userRolesMap.computeIfAbsent(ur.getUserId(), k -> new ArrayList<>()).add(ur);
+            }
+        }
+        
+        // 获取所有角色信息
+        List<Long> roleIds = userRolesMap.values().stream()
+                .flatMap(List::stream)
+                .map(HotelUserRole::getRoleId)
+                .distinct()
+                .filter(Objects::nonNull)
+                .toList();
+        
+        Map<Long, HotelRole> roleMap = new HashMap<>();
+        if (!roleIds.isEmpty()) {
+            List<HotelRole> roles = roleRepository.findAllById(roleIds);
+            roles.forEach(role -> roleMap.put(role.getId(), role));
+        }
+        
         // 构建用户项目
         List<UserItem> userItems = users.stream().map(user -> {
             UserItem item = new UserItem();
@@ -412,6 +454,8 @@ public class HotelUserServiceImpl implements HotelUserService {
             item.setDisplayName(user.getDisplayName());
             item.setEmployeeNumber(user.getEmployeeNumber());
             item.setActive(user.getActive());
+            item.setCreateTime(user.getCreateTime().getTime());
+            item.setUpdateTime(user.getUpdateTime().getTime());
             
             // 添加部门信息
             HotelUserDepartment userDept = userDeptMap.get(user.getId());
@@ -423,6 +467,22 @@ public class HotelUserServiceImpl implements HotelUserService {
                     deptInfo.setDeptName(dept.getName());
                     item.setDepartment(deptInfo);
                 }
+            }
+            
+            // 添加角色信息 - 支持多个角色
+            List<HotelUserRole> userRoles = userRolesMap.get(user.getId());
+            if (userRoles != null && !userRoles.isEmpty()) {
+                List<UserRole> roleInfos = new ArrayList<>();
+                for (HotelUserRole userRole : userRoles) {
+                    HotelRole role = roleMap.get(userRole.getRoleId());
+                    if (role != null) {
+                        UserRole roleInfo = new UserRole();
+                        roleInfo.setRoleId(role.getId());
+                        roleInfo.setRoleName(role.getName());
+                        roleInfos.add(roleInfo);
+                    }
+                }
+                item.setUserRoles(roleInfos);
             }
             
             return item;

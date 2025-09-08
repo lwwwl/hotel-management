@@ -1,32 +1,49 @@
 package com.example.hotelmanagement.service.impl;
 
-import com.example.hotelmanagement.dao.entity.HotelRole;
-import com.example.hotelmanagement.dao.entity.HotelRoleMenu;
-import com.example.hotelmanagement.dao.entity.HotelUserRole;
-import com.example.hotelmanagement.dao.entity.HotelMenu;
-import com.example.hotelmanagement.dao.repository.HotelRoleMenuRepository;
-import com.example.hotelmanagement.dao.repository.HotelRoleRepository;
-import com.example.hotelmanagement.dao.repository.HotelUserRoleRepository;
-import com.example.hotelmanagement.dao.repository.HotelMenuRepository;
-import com.example.hotelmanagement.model.request.RoleCreateRequest;
-import com.example.hotelmanagement.model.request.RoleDeleteRequest;
-import com.example.hotelmanagement.model.request.RoleListRequest;
-import com.example.hotelmanagement.model.request.RoleUpdateRequest;
-import com.example.hotelmanagement.model.response.ApiResponse;
-import com.example.hotelmanagement.model.response.RoleListResponse;
-import com.example.hotelmanagement.model.bo.RoleListItemBO;
-import com.example.hotelmanagement.model.bo.MenuInfoBO;
-import com.example.hotelmanagement.service.HotelRoleService;
-import jakarta.annotation.Resource;
+import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
-import java.sql.Timestamp;
-import java.util.*;
-import java.util.stream.Collectors;
+import com.example.hotelmanagement.dao.entity.HotelDepartment;
+import com.example.hotelmanagement.dao.entity.HotelMenu;
+import com.example.hotelmanagement.dao.entity.HotelRole;
+import com.example.hotelmanagement.dao.entity.HotelRoleMenu;
+import com.example.hotelmanagement.dao.entity.HotelUser;
+import com.example.hotelmanagement.dao.entity.HotelUserDepartment;
+import com.example.hotelmanagement.dao.entity.HotelUserRole;
+import com.example.hotelmanagement.dao.repository.HotelDepartmentRepository;
+import com.example.hotelmanagement.dao.repository.HotelMenuRepository;
+import com.example.hotelmanagement.dao.repository.HotelRoleMenuRepository;
+import com.example.hotelmanagement.dao.repository.HotelRoleRepository;
+import com.example.hotelmanagement.dao.repository.HotelUserDepartmentRepository;
+import com.example.hotelmanagement.dao.repository.HotelUserRepository;
+import com.example.hotelmanagement.dao.repository.HotelUserRoleRepository;
+import com.example.hotelmanagement.model.bo.MenuInfoBO;
+import com.example.hotelmanagement.model.bo.RoleListItemBO;
+import com.example.hotelmanagement.model.request.RoleCreateRequest;
+import com.example.hotelmanagement.model.request.RoleDeleteRequest;
+import com.example.hotelmanagement.model.request.RoleDetailRequest;
+import com.example.hotelmanagement.model.request.RoleListRequest;
+import com.example.hotelmanagement.model.request.RoleUpdateMenuRequest;
+import com.example.hotelmanagement.model.request.RoleUpdateRequest;
+import com.example.hotelmanagement.model.request.RoleUpdateUserRequest;
+import com.example.hotelmanagement.model.response.ApiResponse;
+import com.example.hotelmanagement.model.response.RoleDetailResponse;
+import com.example.hotelmanagement.model.response.RoleListResponse;
+import com.example.hotelmanagement.service.HotelRoleService;
+
+import jakarta.annotation.Resource;
 
 @Service
 public class HotelRoleServiceImpl implements HotelRoleService {
@@ -42,6 +59,15 @@ public class HotelRoleServiceImpl implements HotelRoleService {
 
     @Resource
     private HotelMenuRepository menuRepository;
+    
+    @Resource
+    private HotelUserRepository userRepository;
+    
+    @Resource
+    private HotelUserDepartmentRepository userDepartmentRepository;
+    
+    @Resource
+    private HotelDepartmentRepository departmentRepository;
 
     @Override
     @Transactional
@@ -124,47 +150,45 @@ public class HotelRoleServiceImpl implements HotelRoleService {
                 role.setDescription(request.getDescription());
             }
 
-            // 更新用户关联
-            if (request.getUserIdList() != null) {
-                List<HotelUserRole> existing = userRoleRepository.findByRoleId(role.getId());
-                userRoleRepository.deleteAll(existing);
+            role.setUpdateTime(new Timestamp(System.currentTimeMillis()));
+            roleRepository.save(role);
+            return ResponseEntity.ok(ApiResponse.success(true));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.error(500, "更新角色失败", e.getMessage()));
+        }
+    }
 
-                if (!request.getUserIdList().isEmpty()) {
-                    List<HotelUserRole> relations = request.getUserIdList().stream()
-                            .distinct()
-                            .map(uid -> {
-                                HotelUserRole ur = new HotelUserRole();
-                                ur.setUserId(uid);
-                                ur.setRoleId(role.getId());
-                                ur.setCreateTime(new Timestamp(System.currentTimeMillis()));
-                                ur.setUpdateTime(new Timestamp(System.currentTimeMillis()));
-                                return ur;
-                            }).toList();
-                    userRoleRepository.saveAll(relations);
-                    role.setMemberCount(relations.size());
-                } else {
-                    role.setMemberCount(0);
-                }
+    @Override
+    @Transactional
+    public ResponseEntity<?> updateRoleUser(RoleUpdateUserRequest request) {
+        try {
+            Optional<HotelRole> opt = roleRepository.findById(request.getRoleId());
+            if (opt.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(ApiResponse.error(404, "更新角色用户失败", "角色不存在"));
             }
+            HotelRole role = opt.get();
 
-            // 更新菜单关联
-            if (request.getMenuIdList() != null) {
-                List<HotelRoleMenu> existMenus = roleMenuRepository.findByRoleId(role.getId());
-                roleMenuRepository.deleteAll(existMenus);
+            // 更新用户关联
+            List<HotelUserRole> existing = userRoleRepository.findByRoleId(role.getId());
+            userRoleRepository.deleteAll(existing);
 
-                if (!request.getMenuIdList().isEmpty()) {
-                    List<HotelRoleMenu> roleMenus = request.getMenuIdList().stream()
-                            .distinct()
-                            .map(mid -> {
-                                HotelRoleMenu rm = new HotelRoleMenu();
-                                rm.setRoleId(role.getId());
-                                rm.setMenuId(mid);
-                                rm.setCreateTime(new Timestamp(System.currentTimeMillis()));
-                                rm.setUpdateTime(new Timestamp(System.currentTimeMillis()));
-                                return rm;
-                            }).toList();
-                    roleMenuRepository.saveAll(roleMenus);
-                }
+            if (request.getUserIdList() != null && !request.getUserIdList().isEmpty()) {
+                List<HotelUserRole> relations = request.getUserIdList().stream()
+                        .distinct()
+                        .map(uid -> {
+                            HotelUserRole ur = new HotelUserRole();
+                            ur.setUserId(uid);
+                            ur.setRoleId(role.getId());
+                            ur.setCreateTime(new Timestamp(System.currentTimeMillis()));
+                            ur.setUpdateTime(new Timestamp(System.currentTimeMillis()));
+                            return ur;
+                        }).toList();
+                userRoleRepository.saveAll(relations);
+                role.setMemberCount(relations.size());
+            } else {
+                role.setMemberCount(0);
             }
 
             role.setUpdateTime(new Timestamp(System.currentTimeMillis()));
@@ -172,7 +196,45 @@ public class HotelRoleServiceImpl implements HotelRoleService {
             return ResponseEntity.ok(ApiResponse.success(true));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(ApiResponse.error(500, "更新角色失败", e.getMessage()));
+                    .body(ApiResponse.error(500, "更新角色用户失败", e.getMessage()));
+        }
+    }
+
+    @Override
+    @Transactional
+    public ResponseEntity<?> updateRoleMenu(RoleUpdateMenuRequest request) {
+        try {
+            Optional<HotelRole> opt = roleRepository.findById(request.getRoleId());
+            if (opt.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(ApiResponse.error(404, "更新角色菜单失败", "角色不存在"));
+            }
+            HotelRole role = opt.get();
+
+            // 更新菜单关联
+            List<HotelRoleMenu> existMenus = roleMenuRepository.findByRoleId(role.getId());
+            roleMenuRepository.deleteAll(existMenus);
+
+            if (request.getMenuIdList() != null && !request.getMenuIdList().isEmpty()) {
+                List<HotelRoleMenu> roleMenus = request.getMenuIdList().stream()
+                        .distinct()
+                        .map(mid -> {
+                            HotelRoleMenu rm = new HotelRoleMenu();
+                            rm.setRoleId(role.getId());
+                            rm.setMenuId(mid);
+                            rm.setCreateTime(new Timestamp(System.currentTimeMillis()));
+                            rm.setUpdateTime(new Timestamp(System.currentTimeMillis()));
+                            return rm;
+                        }).toList();
+                roleMenuRepository.saveAll(roleMenus);
+            }
+
+            role.setUpdateTime(new Timestamp(System.currentTimeMillis()));
+            roleRepository.save(role);
+            return ResponseEntity.ok(ApiResponse.success(true));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.error(500, "更新角色菜单失败", e.getMessage()));
         }
     }
 
@@ -268,6 +330,134 @@ public class HotelRoleServiceImpl implements HotelRoleService {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(ApiResponse.error(500, "获取角色列表失败", e.getMessage()));
+        }
+    }
+    
+    @Override
+    public ResponseEntity<?> getRoleDetail(RoleDetailRequest request) {
+        try {
+            if (request.getRoleId() == null) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(ApiResponse.error(400, "获取角色详情失败", "角色ID不能为空"));
+            }
+            
+            // 查找角色基本信息
+            Optional<HotelRole> roleOpt = roleRepository.findById(request.getRoleId());
+            if (!roleOpt.isPresent()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(ApiResponse.error(404, "获取角色详情失败", "角色不存在"));
+            }
+            
+            HotelRole role = roleOpt.get();
+            
+            // 构建角色基本信息
+            RoleDetailResponse.RoleBasicInfo roleInfo = new RoleDetailResponse.RoleBasicInfo();
+            roleInfo.setRoleId(role.getId());
+            roleInfo.setName(role.getName());
+            roleInfo.setDescription(role.getDescription());
+            roleInfo.setMemberCount(role.getMemberCount());
+            roleInfo.setCreateTime(role.getCreateTime().getTime());
+            roleInfo.setUpdateTime(role.getUpdateTime().getTime());
+            
+            // 获取角色关联的菜单信息
+            List<HotelRoleMenu> roleMenus = roleMenuRepository.findAll().stream()
+                    .filter(rm -> rm.getRoleId().equals(role.getId()))
+                    .toList();
+            
+            List<Long> menuIds = roleMenus.stream()
+                    .map(HotelRoleMenu::getMenuId)
+                    .toList();
+            
+            List<RoleDetailResponse.MenuDetailInfo> menus = new ArrayList<>();
+            if (!menuIds.isEmpty()) {
+                List<HotelMenu> menuList = menuRepository.findAllById(menuIds);
+                menus = menuList.stream()
+                        .map(menu -> {
+                            RoleDetailResponse.MenuDetailInfo menuInfo = new RoleDetailResponse.MenuDetailInfo();
+                            menuInfo.setMenuId(menu.getId());
+                            menuInfo.setMenuName(menu.getName());
+                            menuInfo.setIcon(menu.getIcon());
+                            menuInfo.setSortOrder(menu.getSortOrder());
+                            return menuInfo;
+                        })
+                        .toList();
+            }
+            
+            // 获取角色关联的用户信息（包含部门信息）
+            List<HotelUserRole> userRoles = userRoleRepository.findAll().stream()
+                    .filter(ur -> ur.getRoleId().equals(role.getId()))
+                    .toList();
+            
+            List<Long> userIds = userRoles.stream()
+                    .map(HotelUserRole::getUserId)
+                    .toList();
+            
+            List<RoleDetailResponse.UserDetailInfo> users = new ArrayList<>();
+            if (!userIds.isEmpty()) {
+                List<HotelUser> userList = userRepository.findAllById(userIds);
+                
+                // 获取所有用户的部门关联信息
+                List<HotelUserDepartment> userDepts = userDepartmentRepository.findAll().stream()
+                        .filter(ud -> userIds.contains(ud.getUserId()))
+                        .toList();
+                
+                // 获取所有部门信息
+                List<Long> deptIds = userDepts.stream()
+                        .map(HotelUserDepartment::getDeptId)
+                        .distinct()
+                        .toList();
+                
+                Map<Long, HotelDepartment> deptMap = new HashMap<>();
+                if (!deptIds.isEmpty()) {
+                    List<HotelDepartment> deptList = departmentRepository.findAllById(deptIds);
+                    deptList.forEach(dept -> deptMap.put(dept.getId(), dept));
+                }
+                
+                // 构建用户部门映射
+                Map<Long, List<HotelUserDepartment>> userDeptMap = userDepts.stream()
+                        .collect(Collectors.groupingBy(HotelUserDepartment::getUserId));
+                
+                users = userList.stream()
+                        .map(user -> {
+                            RoleDetailResponse.UserDetailInfo userInfo = new RoleDetailResponse.UserDetailInfo();
+                            userInfo.setUserId(user.getId());
+                            userInfo.setUsername(user.getUsername());
+                            userInfo.setDisplayName(user.getDisplayName());
+                            userInfo.setEmployeeNumber(user.getEmployeeNumber());
+                            userInfo.setActive(user.getActive());
+                            
+                            // 构建部门信息
+                            List<HotelUserDepartment> userDeptList = userDeptMap.getOrDefault(user.getId(), Collections.emptyList());
+                            List<RoleDetailResponse.UserDetailInfo.DepartmentInfo> departments = userDeptList.stream()
+                                    .map(ud -> {
+                                        RoleDetailResponse.UserDetailInfo.DepartmentInfo deptInfo = 
+                                                new RoleDetailResponse.UserDetailInfo.DepartmentInfo();
+                                        HotelDepartment dept = deptMap.get(ud.getDeptId());
+                                        if (dept != null) {
+                                            deptInfo.setDeptId(dept.getId());
+                                            deptInfo.setDeptName(dept.getName());
+                                        }
+                                        return deptInfo;
+                                    })
+                                    .filter(deptInfo -> deptInfo.getDeptId() != null)
+                                    .toList();
+                            userInfo.setDepartments(departments);
+                            
+                            return userInfo;
+                        })
+                        .toList();
+            }
+            
+            // 构建响应对象
+            RoleDetailResponse response = new RoleDetailResponse();
+            response.setRoleInfo(roleInfo);
+            response.setMenus(menus);
+            response.setUsers(users);
+            
+            return ResponseEntity.ok(ApiResponse.success(response));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.error(500, "获取角色详情失败", e.getMessage()));
         }
     }
 }

@@ -41,6 +41,12 @@ public class QuickMenu {
     private String content;
 
     /**
+     * 排序序号，越小越靠前
+     */
+    @Column(name = "sort_order")
+    private Integer sortOrder;
+
+    /**
      * 创建时间
      */
     @CreationTimestamp

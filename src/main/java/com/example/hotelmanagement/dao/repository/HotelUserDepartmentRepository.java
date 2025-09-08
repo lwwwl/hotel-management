@@ -1,10 +1,11 @@
 package com.example.hotelmanagement.dao.repository;
 
-import com.example.hotelmanagement.dao.entity.HotelUserDepartment;
+import java.util.List;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
-import java.util.List;
+import com.example.hotelmanagement.dao.entity.HotelUserDepartment;
 
 public interface HotelUserDepartmentRepository extends JpaRepository<HotelUserDepartment, Long> {
     List<HotelUserDepartment> findByDeptId(Long deptId);
@@ -17,4 +18,6 @@ public interface HotelUserDepartmentRepository extends JpaRepository<HotelUserDe
 
     @Query("SELECT DISTINCT hud.deptId FROM HotelUserDepartment hud WHERE hud.userId = :userId")
     List<Long> findDeptIdsByUserId(Long userId);
+
+    List<HotelUserDepartment> findByDeptIdAndUserId(Long deptId, Long userId);
 } 

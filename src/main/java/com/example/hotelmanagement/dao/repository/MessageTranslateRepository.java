@@ -13,6 +13,10 @@ public interface MessageTranslateRepository extends JpaRepository<MessageTransla
 
     List<MessageTranslate> findByConversationId(Long conversationId);
 
+    List<MessageTranslate> findByConversationIdAndLanguage(Long conversationId, String language);
+
+    List<MessageTranslate> findByConversationIdAndMessageIdInAndLanguage(Long conversationId, List<Long> messageIds, String language);
+
     List<MessageTranslate> findByMessageId(Long messageId);
 
     Optional<MessageTranslate> findByConversationIdAndMessageIdAndLanguage(Long conversationId, Long messageId, String language);

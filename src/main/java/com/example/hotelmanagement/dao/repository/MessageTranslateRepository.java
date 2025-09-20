@@ -23,3 +23,4 @@ public interface MessageTranslateRepository extends JpaRepository<MessageTransla
 }
 
 
+

@@ -14,7 +14,6 @@ import com.example.hotelmanagement.service.MessageTranslateService;
 import jakarta.annotation.Resource;
 
 @RestController
-@RequireUserId
 @CrossOrigin
 @RequestMapping("/translate")
 public class MessageTranslateController {

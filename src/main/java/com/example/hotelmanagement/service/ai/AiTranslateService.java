@@ -1,52 +1,102 @@
 package com.example.hotelmanagement.service.ai;
 
-import com.openai.client.OpenAIClient;
-import com.openai.client.okhttp.OpenAIOkHttpClient;
-import com.openai.models.ChatModel;
-import com.openai.models.chat.completions.ChatCompletion;
-import com.openai.models.chat.completions.ChatCompletionCreateParams;
-import org.springframework.beans.factory.annotation.Value;
+import com.example.hotelmanagement.enums.LanguageEnum;
+import com.example.hotelmanagement.model.dto.MessageContentInfo;
+import com.example.hotelmanagement.model.dto.TranslateResultInfo;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+import com.example.hotelmanagement.model.bo.OpenAiResponseBO;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
+import org.springframework.web.client.RestTemplate;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class AiTranslateService {
 
-    private final OpenAIClient openAIClient;
+    private final RestTemplate restTemplate = new RestTemplate();
+    private final Gson gson = new Gson();
+    private static final String OPENAI_API_URL = "https://api.openai.com/v1/chat/completions";
+    private static final String API_KEY = "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";
 
-    // 从 application.properties 或 application.yml 读取 API Key
-    public AiTranslateService(@Value("${openai.api.key}") String apiKey) {
-        this.openAIClient = new OpenAIOkHttpClient(apiKey);
+
+    public List<TranslateResultInfo> batchTranslate(List<MessageContentInfo> messages, LanguageEnum language) {
+        if (CollectionUtils.isEmpty(messages)) {
+            return Collections.emptyList();
+        }
+        String jsonInput = gson.toJson(messages);
+        String prompt = buildPrompt(language.getDescription());
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setBearerAuth(API_KEY);
+
+        Map<String, Object> requestBody = Map.of(
+                "model", "gpt-5-mini",
+                "messages", List.of(
+                        Map.of("role", "system", "content", prompt),
+                        Map.of("role", "user", "content", jsonInput)
+                )
+        );
+
+        HttpEntity<String> request = new HttpEntity<>(gson.toJson(requestBody), headers);
+
+        // Log the cURL command for debugging
+        String requestBodyJson = gson.toJson(requestBody);
+        String escapedData = requestBodyJson.replace("'", "'\\''"); // Escape single quotes for shell safety
+        String curl = String.format(
+                "curl -X POST '%s' \\\n-H 'Authorization: Bearer %s' \\\n-H 'Content-Type: application/json' \\\n-d '%s'",
+                OPENAI_API_URL,
+                API_KEY,
+                escapedData
+        );
+        System.out.println("\n--- cURL for OpenAI Request ---\n" + curl + "\n---------------------------------\n");
+
+        String responseJson = restTemplate.postForObject(OPENAI_API_URL, request, String.class);
+        OpenAiResponseBO response = gson.fromJson(responseJson, OpenAiResponseBO.class);
+
+        if (response != null && response.getChoices() != null && !response.getChoices().isEmpty()) {
+            String content = response.getChoices().get(0).getMessage().getContent();
+            if (!StringUtils.hasText(content)) {
+                return Collections.emptyList();
+            }
+            return gson.fromJson(content, new TypeToken<List<TranslateResultInfo>>() {}.getType());
+        }
+        return Collections.emptyList();
     }
 
-    /**
-     * 调用 AI 翻译消息
-     * @param targetLang 目标语言（中文描述，如 "英文"、"日文"）
-     * @param messagesJson 消息列表 JSON（格式：[{"messageId":1,"content":"你好"}]）
-     * @return 翻译结果 JSON（格式保持不变，只翻译 content 字段）
-     */
-    public String translateMessages(String targetLang, String messagesJson) {
-        String systemPrompt = "你是一个专业的翻译助手。你的任务是将输入的消息内容翻译成指定语言，并严格保持输入的结构化格式返回。\n" +
-                "要求：\n" +
-                "1. 保留每条消息的 messageId，不得修改。\n" +
-                "2. 仅翻译 content 字段的文本，不要改动其他字段。\n" +
-                "3. 返回结果必须是 JSON 数组，结构与输入完全一致，只是 content 替换为翻译后的文本。\n" +
-                "4. 不要输出除 JSON 之外的任何多余说明或注释。";
+    private String buildPrompt(String targetLanguage) {
+        return String.format(
+                "### ROLE & GOAL ###\n" +
+                        "You are an expert linguist and a professional translation engine. Your primary goal is to provide accurate, natural-sounding translations for the JSON data provided by the user.\n\n" +
 
-        String userPrompt = "目标语言：" + targetLang + "\n\n" +
-                "输入消息列表：\n" + messagesJson + "\n\n" +
-                "请将以上消息翻译成目标语言，并返回格式化结果。";
+                        "### TARGET LANGUAGE ###\n" +
+                        "The target language for this translation task is: **%s**\n\n" +
 
-        ChatCompletionCreateParams params = ChatCompletionCreateParams.builder()
-                .model(ChatModel.GPT_4_1)
-                .messages(List.of(
-                        new ChatMessage(ChatMessageRole.SYSTEM.value(), systemPrompt),
-                        new ChatMessage(ChatMessageRole.USER.value(), userPrompt)
-                ))
-                .build();
+                        "### INSTRUCTIONS ###\n" +
+                        "1.  You will receive a JSON array of objects, where each object contains a 'messageId' and a 'content' field.\n" +
+                        "2.  Translate the 'content' field of each object into the specified **TARGET LANGUAGE (%s)**.\n" +
+                        "3.  The 'messageId' serves as a unique identifier and **must not** be altered in any way.\n" +
+                        "4.  Your response **must** be a valid JSON array of objects.\n" +
+                        "5.  Each object in your response must contain the original 'messageId' and the translated text in a new field named 'result'.\n\n" +
 
-        ChatCompletion chatCompletion = openAIClient.chat().create(params);
-        return chatCompletion.getChoices().get(0).getMessage().getContent().trim();
+                        "### EXAMPLE ###\n" +
+                        "If the target language is French and the input is:\n" +
+                        "`[{\"messageId\":1,\"content\":\"Hello, how are you?\"}, {\"messageId\":2,\"content\":\"Good morning.\"}]`\n\n" +
+                        "Your response should be:\n" +
+                        "`[{\"messageId\":1,\"result\":\"Bonjour, comment ça va ?\"}, {\"messageId\":2,\"result\":\"Bonjour.\"}]`\n\n" +
+
+                        "### IMPORTANT ###\n" +
+                        "- Ensure the output is a single, minified JSON array without any additional text, explanations, or formatting.\n" +
+                        "- Preserve the original meaning and tone of the content as much as possible.\n" +
+                        "- Do not translate any JSON keys ('messageId', 'content', 'result').",
+                targetLanguage, targetLanguage);
     }
 }

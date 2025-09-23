@@ -5,5 +5,7 @@ import lombok.Data;
 @Data
 public class ChatwootConversationCountRequest {
     private String accessToken;
-    private Long accountId;
+    private String status;
+    // 当前写死2
+    private Integer inboxId;
 } 

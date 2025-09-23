@@ -8,4 +8,5 @@ public class ChatwootConversationListRequest {
 
     private String label;
     private String assigneeType;
+    private String status;
 } 

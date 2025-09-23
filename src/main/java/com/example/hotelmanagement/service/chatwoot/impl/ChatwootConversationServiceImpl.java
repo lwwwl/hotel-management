@@ -4,12 +4,15 @@ import com.example.hotelmanagement.service.chatwoot.ChatwootConversationService;
 import com.example.hotelmanagement.model.request.chatwoot.*;
 import com.example.hotelmanagement.model.response.chatwoot.*;
 import com.example.hotelmanagement.util.ChatwootHttpClientUtil;
+import io.netty.util.internal.StringUtil;
 import jakarta.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
+
 import java.util.Map;
 import java.util.HashMap;
 
@@ -30,7 +33,14 @@ public class ChatwootConversationServiceImpl implements ChatwootConversationServ
         String apiPath = "/api/v1/accounts/" + accountId + "/conversations/meta";
         logger.info("调用Chatwoot获取会话统计接口: {}", apiPath);
         try {
-            ResponseEntity<ChatwootConversationCountResponse> response = chatwootHttpClientUtil.get(apiPath, null, null, ChatwootConversationCountResponse.class, request.getAccessToken());
+            Map<String, String> queryParams = new HashMap<>();
+            if (!StringUtils.hasText(request.getStatus())) {
+                queryParams.put("status", request.getStatus());
+            }
+            if (request.getInboxId() != null) {
+                queryParams.put("inbox_id", inboxId.toString());
+            }
+            ResponseEntity<ChatwootConversationCountResponse> response = chatwootHttpClientUtil.get(apiPath, null, queryParams, ChatwootConversationCountResponse.class, request.getAccessToken());
             logResponse(response);
             return response.getBody();
         } catch (Exception e) {
@@ -55,6 +65,9 @@ public class ChatwootConversationServiceImpl implements ChatwootConversationServ
             queryParams.put("inbox_id", inboxId.toString());
             if (request.getAssigneeType() != null) {
                 queryParams.put("assignee_type", request.getAssigneeType());
+            }
+            if (StringUtils.hasText(request.getStatus())) {
+                queryParams.put("status", request.getStatus());
             }
             ResponseEntity<ChatwootConversationListResponse> response = chatwootHttpClientUtil.get(apiPath, null, queryParams, ChatwootConversationListResponse.class, request.getAccessToken());
             logResponse(response);

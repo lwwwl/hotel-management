@@ -7,9 +7,16 @@ import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 
+import com.example.hotelmanagement.dao.entity.HotelTask;
 import com.example.hotelmanagement.dao.entity.HotelTaskNotification;
+import com.example.hotelmanagement.dao.entity.HotelUser;
+import com.example.hotelmanagement.dao.entity.HotelUserDepartment;
 import com.example.hotelmanagement.dao.repository.HotelTaskNotificationRepository;
+import com.example.hotelmanagement.dao.repository.HotelTaskRepository;
+import com.example.hotelmanagement.dao.repository.HotelUserDepartmentRepository;
+import com.example.hotelmanagement.dao.repository.HotelUserRepository;
 import com.example.hotelmanagement.model.request.NotificationListRequest;
 import com.example.hotelmanagement.model.response.ApiResponse;
 import com.example.hotelmanagement.model.response.NotificationListResponse;
@@ -24,6 +31,15 @@ public class HotelNotificationServiceImpl implements HotelNotificationService {
 
     @Resource
     private HotelTaskNotificationRepository notificationRepository;
+
+    @Resource
+    private HotelUserDepartmentRepository hotelUserDepartmentRepository;
+
+    @Resource
+    private HotelTaskRepository taskRepository;
+
+    @Resource
+    private HotelUserRepository hotelUserRepository;
 
     @Override
     public ResponseEntity<?> listNotifications(Long userId, NotificationListRequest request) {
@@ -55,6 +71,132 @@ public class HotelNotificationServiceImpl implements HotelNotificationService {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(ApiResponse.error(500, "获取通知列表失败", e.getMessage()));
         }
+    }
+
+    @Override
+    public void addNewTaskNotificationToDept(Long taskId, Long deptId) {
+        if (taskId == null || deptId == null) {
+            return;
+        }
+        List<HotelUserDepartment> userDeptList = hotelUserDepartmentRepository.findByDeptId(deptId);
+        if (CollectionUtils.isEmpty(userDeptList)) {
+            return;
+        }
+        HotelTask task = taskRepository.findById(taskId).orElse(null);
+        if (task == null) {
+            return;
+        }
+        List<HotelTaskNotification> notifications = new ArrayList<>();
+        for (HotelUserDepartment userDept : userDeptList) {
+            HotelTaskNotification notification = new HotelTaskNotification();
+            notification.setUserId(userDept.getUserId());
+            notification.setTitle("新任务分配");
+            notification.setBody(task.getTitle());
+            notification.setTaskId(taskId);
+            notification.setNotificationType("info");
+            notification.setAlreadyRead((short) 0);
+            notification.setCreateTime(new Timestamp(System.currentTimeMillis()));
+            notification.setUpdateTime(new Timestamp(System.currentTimeMillis()));
+            notifications.add(notification);
+        }
+        notificationRepository.saveAll(notifications);
+    }
+
+    @Override
+    public void addTransferTaskNotification(Long taskId, Long fromUserId, Long toUserId) {
+        HotelTask task = taskRepository.findById(taskId).orElse(null);
+        if (task == null) {
+            return;
+        }
+        HotelUser user = hotelUserRepository.findById(fromUserId).orElse(null);
+        if (user == null) {
+            return;
+        }
+        HotelTaskNotification notification = new HotelTaskNotification();
+        notification.setUserId(toUserId);
+        notification.setTitle(user.getDisplayName() + " 将任务转移给您");
+        notification.setBody(task.getTitle());
+        notification.setTaskId(taskId);
+        notification.setNotificationType("info");
+        notification.setAlreadyRead((short) 0);
+        notification.setCreateTime(new Timestamp(System.currentTimeMillis()));
+        notification.setUpdateTime(new Timestamp(System.currentTimeMillis()));
+        notificationRepository.save(notification);
+    }
+
+    @Override
+    public void addCompleteTaskNotificationToDept(Long taskId) {
+        HotelTask task = taskRepository.findById(taskId).orElse(null);
+        if (task == null) {
+            return;
+        }
+        if (task.getDeptId() == null) {
+            return;
+        }
+        List<HotelUserDepartment> userDeptList = hotelUserDepartmentRepository.findByDeptId(task.getDeptId());
+        if (CollectionUtils.isEmpty(userDeptList)) {
+            return;
+        }
+        HotelUser executor = hotelUserRepository.findById(task.getExecutorUserId()).orElse(null);
+        if (executor == null) {
+            return;
+        }
+        List<HotelTaskNotification> notifications = new ArrayList<>();
+        for (HotelUserDepartment userDept : userDeptList) {
+            HotelTaskNotification notification = new HotelTaskNotification();
+            notification.setUserId(userDept.getUserId());
+            notification.setTitle(executor.getDisplayName() + " 任务完成");
+            notification.setBody(task.getTitle());
+            notification.setTaskId(taskId);
+            notification.setNotificationType("info");
+            notification.setAlreadyRead((short) 0);
+            notification.setCreateTime(new Timestamp(System.currentTimeMillis()));
+            notification.setUpdateTime(new Timestamp(System.currentTimeMillis()));
+            notifications.add(notification);
+        }
+        notificationRepository.saveAll(notifications);
+    }
+
+    @Override
+    public void addReminderTaskNotification(Long taskId) {
+        HotelTask task = taskRepository.findById(taskId).orElse(null);
+        if (task == null) {
+            return;
+        }
+        // executor存在时，给executor发通知，不存在时，给工单所属部门所有用户发通知
+        List<Long> sendToUserIds = new ArrayList<>();
+        if (task.getExecutorUserId() != null) {
+            sendToUserIds.add(task.getExecutorUserId());
+        } else {
+            if (task.getDeptId() == null) {
+                return;            }
+            // 发给工单所属部门所有用户
+            List<HotelUserDepartment> userDeptList = hotelUserDepartmentRepository.findByDeptId(task.getDeptId());
+            if (CollectionUtils.isEmpty(userDeptList)) {
+                return;
+            }
+            for (HotelUserDepartment userDept : userDeptList) {
+                sendToUserIds.add(userDept.getUserId());
+            }
+        }
+        
+        List<HotelTaskNotification> notifications = new ArrayList<>();
+        for (Long userId : sendToUserIds) {
+            HotelTaskNotification notification = new HotelTaskNotification();
+            notification.setUserId(userId);
+            notification.setTitle("任务催办提醒");
+            notification.setBody(task.getTitle());
+            notification.setTaskId(taskId);
+            notification.setNotificationType("info");
+            notification.setAlreadyRead((short) 0);
+            notification.setCreateTime(new Timestamp(System.currentTimeMillis()));
+            notification.setUpdateTime(new Timestamp(System.currentTimeMillis()));
+            notifications.add(notification);
+        }
+        if (CollectionUtils.isEmpty(notifications)) {
+            return;
+        }
+        notificationRepository.saveAll(notifications);
     }
 
     private NotificationListResponse buildResponse(List<HotelTaskNotification> entities, int size, boolean hasMore) {

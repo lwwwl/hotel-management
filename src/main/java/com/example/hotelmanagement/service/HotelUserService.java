@@ -1,7 +1,13 @@
 package com.example.hotelmanagement.service;
 
-import com.example.hotelmanagement.model.request.*;
 import org.springframework.http.ResponseEntity;
+
+import com.example.hotelmanagement.model.request.UserCreateRequest;
+import com.example.hotelmanagement.model.request.UserDeleteRequest;
+import com.example.hotelmanagement.model.request.UserDetailRequest;
+import com.example.hotelmanagement.model.request.UserLockRequest;
+import com.example.hotelmanagement.model.request.UserSearchRequest;
+import com.example.hotelmanagement.model.request.UserUpdateRequest;
 
 public interface HotelUserService {
     /**

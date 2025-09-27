@@ -1,17 +1,30 @@
 package com.example.hotelmanagement.service.impl;
 
-import com.example.hotelmanagement.model.request.*;
-import com.example.hotelmanagement.model.response.ApiResponse;
-import com.example.hotelmanagement.service.HotelTaskService;
-import com.example.hotelmanagement.util.HttpClientUtil;
+import java.util.HashMap;
+import java.util.Map;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
-import java.util.HashMap;
-import java.util.Map;
+import com.example.hotelmanagement.model.request.TaskAddExecutorRequest;
+import com.example.hotelmanagement.model.request.TaskChangeStatusRequest;
+import com.example.hotelmanagement.model.request.TaskClaimRequest;
+import com.example.hotelmanagement.model.request.TaskCreateRequest;
+import com.example.hotelmanagement.model.request.TaskDeleteRequest;
+import com.example.hotelmanagement.model.request.TaskDetailRequest;
+import com.example.hotelmanagement.model.request.TaskListRequest;
+import com.example.hotelmanagement.model.request.TaskReminderRequest;
+import com.example.hotelmanagement.model.request.TaskTransferExecutorRequest;
+import com.example.hotelmanagement.model.request.TaskUpdateRequest;
+import com.example.hotelmanagement.model.response.ApiResponse;
+import com.example.hotelmanagement.service.HotelNotificationService;
+import com.example.hotelmanagement.service.HotelTaskService;
+import com.example.hotelmanagement.util.HttpClientUtil;
+
+import jakarta.annotation.Resource;
 
 @Service
 public class HotelTaskServiceImpl implements HotelTaskService {
@@ -24,6 +37,9 @@ public class HotelTaskServiceImpl implements HotelTaskService {
     public HotelTaskServiceImpl(HttpClientUtil httpClientUtil) {
         this.httpClientUtil = httpClientUtil;
     }
+
+    @Resource
+    private HotelNotificationService hotelNotificationService;
     
     private Map<String, String> createUserIdHeader(Long userId) {
         Map<String, String> headers = new HashMap<>();
@@ -90,6 +106,13 @@ public class HotelTaskServiceImpl implements HotelTaskService {
             logResponse(response);
             
             if (response.getBody() != null) {
+                try {
+                    ApiResponse<?> apiResponse = (ApiResponse<?>) response.getBody();
+                    Long taskId = (Long) apiResponse.getData();
+                    hotelNotificationService.addNewTaskNotificationToDept(taskId, request.getDeptId());
+                } catch (Exception e) {
+                    // ignore
+                }
                 return ResponseEntity.ok(response.getBody());
             } else {
                 ApiResponse<?> errorResponse = ApiResponse.error(500, "请求失败", "远程服务无响应");
@@ -205,6 +228,11 @@ public class HotelTaskServiceImpl implements HotelTaskService {
             logResponse(response);
             
             if (response.getBody() != null) {
+                try {
+                    hotelNotificationService.addTransferTaskNotification(request.getTaskId(), userId, request.getNewExecutorUserId());
+                } catch (Exception e) {
+                    // ignore
+                }
                 return ResponseEntity.ok(response.getBody());
             } else {
                 ApiResponse<?> errorResponse = ApiResponse.error(500, "请求失败", "远程服务无响应");
@@ -228,6 +256,13 @@ public class HotelTaskServiceImpl implements HotelTaskService {
             logResponse(response);
             
             if (response.getBody() != null) {
+                if ("completed".equals(request.getNewTaskStatus())) {
+                    try {
+                        hotelNotificationService.addCompleteTaskNotificationToDept(request.getTaskId());
+                    } catch (Exception e) {
+                        // ignore
+                    }
+                }
                 return ResponseEntity.ok(response.getBody());
             } else {
                 ApiResponse<?> errorResponse = ApiResponse.error(500, "请求失败", "远程服务无响应");
@@ -251,6 +286,11 @@ public class HotelTaskServiceImpl implements HotelTaskService {
             logResponse(response);
             
             if (response.getBody() != null) {
+                try {
+                    hotelNotificationService.addReminderTaskNotification(request.getTaskId());
+                } catch (Exception e) {
+                    // ignore
+                }
                 return ResponseEntity.ok(response.getBody());
             } else {
                 ApiResponse<?> errorResponse = ApiResponse.error(500, "请求失败", "远程服务无响应");

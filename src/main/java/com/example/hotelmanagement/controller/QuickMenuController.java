@@ -1,6 +1,6 @@
 package com.example.hotelmanagement.controller;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import jakarta.annotation.Resource;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -22,7 +22,7 @@ import com.example.hotelmanagement.service.HotelQuickMenuService;
 @RequestMapping("/quickMenu")
 public class QuickMenuController {
 
-    @Autowired
+    @Resource
     private HotelQuickMenuService quickMenuService;
 
     /** 创建快捷菜单 */

@@ -88,4 +88,6 @@ public interface HotelUserRepository extends JpaRepository<HotelUser, Long> {
     @Modifying
     @Query(value = "UPDATE hotel_users SET cw_user_id = :cwUserId, cw_api_access_token = :cwApiAccessToken WHERE id = :userId", nativeQuery = true)
     void updateCwUserId(@Param("userId") Long userId, @Param("cwUserId") Long cwUserId, @Param("cwApiAccessToken") String cwApiAccessToken);
+
+    List<HotelUser> findAllByIdIn(List<Long> userId);
 } 

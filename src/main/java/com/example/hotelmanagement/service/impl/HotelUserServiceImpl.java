@@ -42,6 +42,9 @@ import com.example.hotelmanagement.model.response.UserListResponse;
 import com.example.hotelmanagement.model.response.UserRole;
 import com.example.hotelmanagement.model.response.UserRoleInfo;
 import com.example.hotelmanagement.service.HotelUserService;
+import com.example.hotelmanagement.service.LdapService;
+import com.example.hotelmanagement.util.PasswordUtil;
+import org.springframework.ldap.NameNotFoundException;
 
 import jakarta.annotation.Resource;
 import jakarta.persistence.EntityManager;
@@ -52,6 +55,9 @@ public class HotelUserServiceImpl implements HotelUserService {
 
     @PersistenceContext
     private EntityManager entityManager;
+
+    @Resource
+    private LdapService ldapService;
 
     @Resource
     private HotelUserRepository userRepository;
@@ -140,7 +146,7 @@ public class HotelUserServiceImpl implements HotelUserService {
             HotelUser user = new HotelUser();
             user.setUsername(request.getUsername());
             // 简单的密码编码 - 在生产环境中，使用适当的密码编码器
-            user.setPassword(Base64.getEncoder().encodeToString(password.getBytes()));
+            user.setPassword(PasswordUtil.hashPassword(password));
             user.setDisplayName(request.getDisplayName());
             user.setEmployeeNumber(request.getEmployeeNumber());
             user.setEmail(request.getEmail());
@@ -150,6 +156,8 @@ public class HotelUserServiceImpl implements HotelUserService {
             user.setUpdateTime(new Timestamp(System.currentTimeMillis()));
             
             HotelUser savedUser = userRepository.save(user);
+
+            ldapService.addUser(savedUser);
             
             // 关联单个部门
             if (request.getDeptId() != null) {
@@ -236,11 +244,12 @@ public class HotelUserServiceImpl implements HotelUserService {
             }
 
             if (StringUtils.hasText(request.getPassword())) {
-                user.setPassword(Base64.getEncoder().encodeToString(request.getPassword().getBytes()));
+                user.setPassword(PasswordUtil.hashPassword(request.getPassword()));
             }
             
             user.setUpdateTime(new Timestamp(System.currentTimeMillis()));
-            userRepository.save(user);
+            HotelUser savedUser = userRepository.save(user);
+            ldapService.updateUser(savedUser);
             
             // 更新部门关联
             if (request.getDeptId() != null) {
@@ -287,10 +296,12 @@ public class HotelUserServiceImpl implements HotelUserService {
     @Transactional
     public ResponseEntity<?> deleteUser(UserDeleteRequest request) {
         try {
-            if (!userRepository.existsById(request.getUserId())) {
+            Optional<HotelUser> userOptional = userRepository.findById(request.getUserId());
+            if (userOptional.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND)
                         .body(ApiResponse.error(404, "用户不存在", "未找到指定用户"));
             }
+            HotelUser user = userOptional.get();
             
             // 删除用户-部门关联
             List<HotelUserDepartment> userDepts = userDeptRepository.findByUserId(request.getUserId());
@@ -302,6 +313,13 @@ public class HotelUserServiceImpl implements HotelUserService {
             
             // 删除用户
             userRepository.deleteById(request.getUserId());
+
+            try {
+                ldapService.deleteUser(user);
+            } catch (Exception e) {
+                // 如果用户在LDAP中不存在，只记录错误，不中断操作
+                System.err.println("Failed to delete user from LDAP, maybe user does not exist. User: " + user.getUsername() + ". Error: " + e.getMessage());
+            }
             
             return ResponseEntity.ok(ApiResponse.success(true));
         } catch (Exception e) {
@@ -504,4 +522,18 @@ public class HotelUserServiceImpl implements HotelUserService {
         return response;
     }
 
+    @Override
+    @Transactional
+    public void syncAllUsersToLdap() {
+        List<HotelUser> allUsers = userRepository.findAll();
+        for (HotelUser user : allUsers) {
+            try {
+                // 尝试更新用户，p如果用户不存在，会抛出NameNotFoundException
+                ldapService.updateUser(user);
+            } catch (NameNotFoundException e) {
+                // 如果用户在LDAP中不存在，则创建新用户
+                ldapService.addUser(user);
+            }
+        }
+    }
 } 

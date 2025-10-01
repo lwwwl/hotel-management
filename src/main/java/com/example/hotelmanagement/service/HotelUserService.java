@@ -52,4 +52,8 @@ public interface HotelUserService {
      */
     ResponseEntity<?> toggleUserLock(UserLockRequest request);
 
+    /**
+     * 将所有用户数据同步到LDAP
+     */
+    void syncAllUsersToLdap();
 }

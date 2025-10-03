@@ -13,4 +13,6 @@ import java.util.Optional;
 
 @Repository
 public interface HotelGuestRepository extends JpaRepository<HotelGuest, Long> {
+
+    List<HotelGuest> findByPhoneSuffixAndRoomNameAndCreateTimeGreaterThan(String phoneSuffix, String roomName, Timestamp createTime);
 } 

@@ -11,6 +11,9 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import com.example.hotelmanagement.model.request.chatwoot.ChatwootAddNewAgentRequest;
+import com.example.hotelmanagement.service.ChatwootUserFacadeService;
+import com.example.hotelmanagement.util.RandomEmailGenerator;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -73,6 +76,9 @@ public class HotelUserServiceImpl implements HotelUserService {
 
     @Resource
     private HotelRoleRepository roleRepository;
+
+    @Resource
+    private ChatwootUserFacadeService chatwootUserFacadeService;
 
     @Override
     public ResponseEntity<?> searchUsers(UserSearchRequest request) {
@@ -145,7 +151,7 @@ public class HotelUserServiceImpl implements HotelUserService {
             // 创建用户
             HotelUser user = new HotelUser();
             user.setUsername(request.getUsername());
-            // 简单的密码编码 - 在生产环境中，使用适当的密码编码器
+            // SSHA加密，适用于LDAP
             user.setPassword(PasswordUtil.hashPassword(password));
             user.setDisplayName(request.getDisplayName());
             user.setEmployeeNumber(request.getEmployeeNumber());
@@ -189,6 +195,16 @@ public class HotelUserServiceImpl implements HotelUserService {
                 }
                 userRoleRepository.saveAll(userRoles);
             }
+
+            // 创建chatwoot用户
+            ChatwootAddNewAgentRequest createNewAgentRequest = new ChatwootAddNewAgentRequest();
+            createNewAgentRequest.setName(request.getDisplayName());
+            createNewAgentRequest.setRole("agent");
+            createNewAgentRequest.setEmail(RandomEmailGenerator.generate());
+            // 所有用户固定密码
+            createNewAgentRequest.setPassword("Password1!");
+            // 此方法下会将chatwoot用户信息save关联到当前新用户表数据中
+            chatwootUserFacadeService.createUser(createNewAgentRequest, savedUser.getId());
             
             return ResponseEntity.ok(ApiResponse.success(savedUser.getId()));
         } catch (Exception e) {

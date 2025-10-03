@@ -17,8 +17,11 @@ public class ChatwootAccountServiceImpl implements ChatwootAccountService {
     private static final Logger logger = LoggerFactory.getLogger(ChatwootAccountServiceImpl.class);
     private final ChatwootHttpClientUtil chatwootHttpClientUtil;
 
-    @Value("${api.chatwoot.access.token}")
-    private String apiAccessToken;
+    @Value("${api.chatwoot.platform.access.token}")
+    private String platformAccessToken;
+
+    @Value("${chatwoot.account.id}")
+    private String accountId;
 
     @Autowired
     public ChatwootAccountServiceImpl(ChatwootHttpClientUtil chatwootHttpClientUtil) {
@@ -27,11 +30,11 @@ public class ChatwootAccountServiceImpl implements ChatwootAccountService {
 
     @Override
     public ChatwootAddUserToAccountResponse addUserToAccount(ChatwootAccountUserRequest request) {
-        String apiPath = "/platform/api/v1/accounts/" + request.getAccountId() + "/account_users";
+        String apiPath = "/platform/api/v1/accounts/" + accountId + "/account_users";
         logger.info("调用Chatwoot添加用户到账户接口: {}", apiPath);
         
         try {
-            ResponseEntity<ChatwootAddUserToAccountResponse> response = chatwootHttpClientUtil.post(apiPath, request, ChatwootAddUserToAccountResponse.class, apiAccessToken);
+            ResponseEntity<ChatwootAddUserToAccountResponse> response = chatwootHttpClientUtil.post(apiPath, request, ChatwootAddUserToAccountResponse.class, platformAccessToken);
             logResponse(response);
 
             return response.getBody();

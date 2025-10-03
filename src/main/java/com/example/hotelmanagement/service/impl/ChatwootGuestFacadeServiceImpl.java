@@ -3,6 +3,8 @@ package com.example.hotelmanagement.service.impl;
 import com.example.hotelmanagement.dao.entity.HotelGuest;
 import com.example.hotelmanagement.dao.repository.HotelGuestRepository;
 import com.example.hotelmanagement.model.bo.ChatwootContactDetailBO;
+import com.example.hotelmanagement.model.bo.ChatwootCreateContactRespBO;
+import com.example.hotelmanagement.model.bo.ChatwootGuestCreateConversationRespBO;
 import com.example.hotelmanagement.model.request.chatwoot.*;
 import com.example.hotelmanagement.model.response.chatwoot.*;
 import com.example.hotelmanagement.service.ChatwootGuestFacadeService;
@@ -12,7 +14,6 @@ import com.example.hotelmanagement.service.chatwoot.ChatwootContactMessageServic
 import jakarta.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -38,19 +39,8 @@ public class ChatwootGuestFacadeServiceImpl implements ChatwootGuestFacadeServic
     private HotelGuestRepository hotelGuestRepository;
 
     @Override
-    public ChatwootContactDetailBO createContact(ChatwootContactCreateRequest request) {
-        ChatwootContactCreateResponse contactCreateResponse = chatwootContactService.createContact(request);
-        if (contactCreateResponse == null ||
-                StringUtils.hasText(contactCreateResponse.getError())) {
-            String errMsg = contactCreateResponse == null ? "" :  contactCreateResponse.getError();
-            logger.error("创建联系人失败: {}",  errMsg);
-            return null;
-        }
-        // 避免空指针异常
-        if (contactCreateResponse.getPayload() == null) {
-            return null;
-        }
-        return contactCreateResponse.getPayload().get(0);
+    public ChatwootCreateContactRespBO createContact(ChatwootContactCreateRequest request) {
+        return chatwootContactService.createContact(request);
     }
 
     @Override
@@ -88,12 +78,8 @@ public class ChatwootGuestFacadeServiceImpl implements ChatwootGuestFacadeServic
     }
 
     @Override
-    public ResponseEntity<?> createConversation(GuestChatwootCreateConversationRequest request, Long guestId) {
-        if (guestId == null) {
-            return ResponseEntity.badRequest().body("访客ID不能为空");
-        }
-        var response = chatwootContactConversationService.createConversation(request, guestId);
-        return ResponseEntity.ok(response);
+    public ChatwootGuestCreateConversationRespBO createConversation(GuestChatwootCreateConversationRequest request) {
+        return chatwootContactConversationService.createConversation(request);
     }
 
     @Override

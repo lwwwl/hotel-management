@@ -17,9 +17,9 @@ public interface ChatwootConversationService {
 
     ChatwootAddConversationLabelResponse addConversationLabel(ChatwootAddConversationLabelRequest request);
 
-    ChatwootAssignConversationResponse assignConversation(ChatwootAssignConversationRequest request);
+    boolean assignConversation(ChatwootAssignConversationRequest request, String userAccessToken, Long chatwootUserId);
 
     ChatwootUpdateConversationCustomAttributesResponse updateConversationCustomAttributes(ChatwootUpdateConversationCustomAttributesRequest request);
 
-    ChatwootToggleConversationStatusResponse toggleConversationStatus(ChatwootToggleConversationStatusRequest request);
+    boolean toggleConversationStatus(ChatwootToggleConversationStatusRequest request, String userAccessToken);
 }

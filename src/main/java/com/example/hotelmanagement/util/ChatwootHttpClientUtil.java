@@ -25,7 +25,7 @@ public class ChatwootHttpClientUtil {
     @Autowired
     public ChatwootHttpClientUtil(RestTemplate restTemplate,
                                   @Value("${api.chatwoot.baseUrl}") String baseUrl,
-                                  @Value("${api.chatwoot.access.token}") String apiAccessToken,
+                                  @Value("${api.chatwoot.administrator.access.token}") String apiAccessToken,
                                   @Value("${api.chatwoot.platform.access.token}") String apiPlatformAccessToken) {
         this.restTemplate = restTemplate;
         this.baseUrl = baseUrl;

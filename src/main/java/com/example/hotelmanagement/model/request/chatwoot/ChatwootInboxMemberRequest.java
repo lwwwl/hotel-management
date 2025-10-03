@@ -1,13 +1,18 @@
 package com.example.hotelmanagement.model.request.chatwoot;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
+
+import java.util.List;
 
 @Data
 public class ChatwootInboxMemberRequest {
-    private String accessToken;
-
     /**
      * 用户ID
      */
-    private Long userId;
+    @JsonProperty("user_ids")
+    private List<Long> userIds;
+
+    @JsonProperty("inbox_id")
+    private Long inboxId;
 } 

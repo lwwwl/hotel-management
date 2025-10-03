@@ -4,6 +4,5 @@ import lombok.Data;
 
 @Data
 public class GuestChatwootConversationListRequest {
-    private String inboxIdentifier;
     private String contactIdentifier;
 } 

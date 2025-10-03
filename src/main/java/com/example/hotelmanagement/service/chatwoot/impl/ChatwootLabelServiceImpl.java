@@ -17,7 +17,7 @@ public class ChatwootLabelServiceImpl implements ChatwootLabelService {
     private static final Logger logger = LoggerFactory.getLogger(ChatwootLabelServiceImpl.class);
     private final ChatwootHttpClientUtil chatwootHttpClientUtil;
 
-    @Value("${api.chatwoot.access.token}")
+    @Value("${api.chatwoot.administrator.access.token}")
     private String apiAccessToken;
 
     @Value("${chatwoot.account.id}")

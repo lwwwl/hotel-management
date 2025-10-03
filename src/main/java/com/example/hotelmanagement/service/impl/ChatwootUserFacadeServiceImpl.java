@@ -8,6 +8,7 @@ import com.example.hotelmanagement.model.bo.ChatwootContactInboxBO;
 import com.example.hotelmanagement.model.request.chatwoot.*;
 import com.example.hotelmanagement.model.response.ApiResponse;
 import com.example.hotelmanagement.model.response.CreateContactResponse;
+import com.example.hotelmanagement.model.response.chatwoot.ChatwootAddUserToAccountResponse;
 import com.example.hotelmanagement.model.response.chatwoot.ChatwootAddUserToInboxResponse;
 import com.example.hotelmanagement.model.response.chatwoot.ChatwootContactCreateResponse;
 import com.example.hotelmanagement.model.response.chatwoot.ChatwootCreateUserResponse;
@@ -21,6 +22,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
+
+import java.util.List;
 
 @Service
 public class ChatwootUserFacadeServiceImpl implements ChatwootUserFacadeService {
@@ -64,8 +67,6 @@ public class ChatwootUserFacadeServiceImpl implements ChatwootUserFacadeService 
         if (currentUser == null) {
             return ResponseEntity.badRequest().body("用户不存在");
         }
-        request.setAccessToken(currentUser.getCwApiAccessToken());
-
         logger.info("开始创建用户并关联到账户和收件箱: {}", request.getName());
 
         try {
@@ -74,7 +75,7 @@ public class ChatwootUserFacadeServiceImpl implements ChatwootUserFacadeService 
             ChatwootCreateUserResponse createUserResponse = chatwootUserService.createUser(request);
 
             if (createUserResponse == null ||
-                    !StringUtils.hasText(createUserResponse.getError())) {
+                    StringUtils.hasText(createUserResponse.getError())) {
                 String errMsg = createUserResponse == null ? "" :  createUserResponse.getError();
                 logger.error("创建用户失败: {}",  errMsg);
                 return ResponseEntity.badRequest().body(errMsg);
@@ -83,11 +84,24 @@ public class ChatwootUserFacadeServiceImpl implements ChatwootUserFacadeService 
             long cwUserId = createUserResponse.getId();
             logger.info("用户创建成功，用户ID: {}", cwUserId);
 
-            // 步骤2: 关联用户到收件箱
-            logger.info("步骤2: 关联用户到收件箱");
+            // 步骤2: 关联用户到账户
+            logger.info("步骤2: 关联用户到账户");
+            ChatwootAccountUserRequest accountUserRequest = new ChatwootAccountUserRequest();
+            accountUserRequest.setUserId(cwUserId);
+            ChatwootAddUserToAccountResponse addUserToAccountResponse = chatwootAccountService.addUserToAccount(accountUserRequest);
+            if (addUserToAccountResponse == null ||
+                    StringUtils.hasText(addUserToAccountResponse.getError())) {
+                String errMsg = addUserToAccountResponse == null ? "" :  addUserToAccountResponse.getError();
+                logger.error("关联用户到账户失败: {}",  errMsg);
+                return ResponseEntity.badRequest().body(errMsg);
+            }
+            logger.info("用户关联到账户成功");
+
+            // 步骤3: 关联用户到收件箱
+            logger.info("步骤3: 关联用户到收件箱");
             ChatwootInboxMemberRequest inboxMemberRequest = new ChatwootInboxMemberRequest();
-            inboxMemberRequest.setUserId(cwUserId);
-            inboxMemberRequest.setAccessToken(currentUser.getCwApiAccessToken());
+            inboxMemberRequest.setInboxId(INBOX_ID);
+            inboxMemberRequest.setUserIds(List.of(cwUserId));
 
             ChatwootAddUserToInboxResponse addUserToInboxResponse = chatwootInboxService.addUserToInbox(inboxMemberRequest);
 
@@ -233,9 +247,12 @@ public class ChatwootUserFacadeServiceImpl implements ChatwootUserFacadeService 
             return ResponseEntity.badRequest().body("用户不存在");
         }
 
-        request.setAccessToken(currentUser.getCwApiAccessToken());
+        if (!StringUtils.hasText(currentUser.getCwApiAccessToken()) || currentUser.getCwUserId() == null) {
+            return ResponseEntity.ok(ApiResponse.error("此账户Chatwoot帐号信息不完整，操作失败，请联系管理员。UserId:" + currentUser.getId()));
+        }
+        // todo 上报事件
 
-        return ResponseEntity.ok(chatwootConversationService.assignConversation(request));
+        return ResponseEntity.ok(chatwootConversationService.assignConversation(request, currentUser.getCwApiAccessToken(), currentUser.getCwUserId()));
     }
 
     @Override
@@ -255,9 +272,12 @@ public class ChatwootUserFacadeServiceImpl implements ChatwootUserFacadeService 
         if (currentUser == null) {
             return ResponseEntity.badRequest().body("用户不存在");
         }
-        request.setAccessToken(currentUser.getCwApiAccessToken());
+        if (!StringUtils.hasText(currentUser.getCwApiAccessToken()) || currentUser.getCwUserId() == null) {
+            return ResponseEntity.ok(ApiResponse.error("此账户Chatwoot帐号信息不完整，操作失败，请联系管理员。UserId:" + currentUser.getId()));
+        }
+        // todo 上报事件
 
-        return ResponseEntity.ok(chatwootConversationService.toggleConversationStatus(request));
+        return ResponseEntity.ok(chatwootConversationService.toggleConversationStatus(request, currentUser.getCwApiAccessToken()));
     }
 
     @Override

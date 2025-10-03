@@ -1,5 +1,6 @@
 package com.example.hotelmanagement.service.chatwoot;
 
+import com.example.hotelmanagement.model.bo.ChatwootCreateContactRespBO;
 import com.example.hotelmanagement.model.request.chatwoot.ChatwootContactCreateRequest;
 import com.example.hotelmanagement.model.request.chatwoot.ChatwootContactUpdateRequest;
 import com.example.hotelmanagement.model.request.chatwoot.ChatwootContactDeleteRequest;
@@ -9,9 +10,11 @@ import com.example.hotelmanagement.model.response.chatwoot.ChatwootContactUpdate
 import com.example.hotelmanagement.model.response.chatwoot.ChatwootContactDeleteResponse;
 import com.example.hotelmanagement.model.response.chatwoot.ChatwootContactDetailResponse;
 
+import java.util.Map;
+
 public interface ChatwootContactService {
 
-    ChatwootContactCreateResponse createContact(ChatwootContactCreateRequest request);
+    ChatwootCreateContactRespBO createContact(ChatwootContactCreateRequest request);
 
     ChatwootContactUpdateResponse updateContact(ChatwootContactUpdateRequest request);
 

@@ -29,6 +29,9 @@ public class ChatwootUserServiceImpl implements ChatwootUserService {
     @Value("${api.chatwoot.platform.access.token}")
     private String platformAccessToken;
 
+    @Value("${chatwoot.account.id}")
+    private String chatwootAccountId;
+
     @Override
     public ChatwootCreateUserResponse createUser(ChatwootAddNewAgentRequest request) {
         String apiPath = "/platform/api/v1/users";

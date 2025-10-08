@@ -7,6 +7,7 @@ import com.example.hotelmanagement.model.request.UserDeleteRequest;
 import com.example.hotelmanagement.model.request.UserDetailRequest;
 import com.example.hotelmanagement.model.request.UserLockRequest;
 import com.example.hotelmanagement.model.request.UserSearchRequest;
+import com.example.hotelmanagement.model.request.UserUpdateBasicRequest;
 import com.example.hotelmanagement.model.request.UserUpdateRequest;
 
 public interface HotelUserService {
@@ -52,4 +53,11 @@ public interface HotelUserService {
      */
     ResponseEntity<?> toggleUserLock(UserLockRequest request);
 
+    /**
+     * 更新当前用户的基本信息
+     * @param request 包含要更新的字段
+     * @param userId 当前用户ID
+     * @return 如果更新成功返回true，否则返回false
+     */
+    ResponseEntity<?> updateUserBasicInfo(UserUpdateBasicRequest request, Long userId);
 }

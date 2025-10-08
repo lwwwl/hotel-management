@@ -79,8 +79,8 @@ public class HotelMenu {
     /**
      * 是否可见
      */
-    @Column(name = "visible")
-    private Boolean visible;
+    @Column(name = "active")
+    private Boolean active;
 
     /**
      * 备注

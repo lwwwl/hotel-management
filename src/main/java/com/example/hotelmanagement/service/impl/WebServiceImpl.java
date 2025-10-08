@@ -1,6 +1,12 @@
 package com.example.hotelmanagement.service.impl;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.http.ResponseEntity;
@@ -8,14 +14,17 @@ import org.springframework.stereotype.Service;
 
 import com.example.hotelmanagement.dao.entity.HotelDepartment;
 import com.example.hotelmanagement.dao.entity.HotelMenu;
+import com.example.hotelmanagement.dao.entity.HotelRole;
 import com.example.hotelmanagement.dao.entity.HotelUser;
 import com.example.hotelmanagement.dao.repository.HotelDepartmentRepository;
 import com.example.hotelmanagement.dao.repository.HotelMenuRepository;
 import com.example.hotelmanagement.dao.repository.HotelRoleMenuRepository;
+import com.example.hotelmanagement.dao.repository.HotelRoleRepository;
 import com.example.hotelmanagement.dao.repository.HotelUserDepartmentRepository;
 import com.example.hotelmanagement.dao.repository.HotelUserRepository;
 import com.example.hotelmanagement.dao.repository.HotelUserRoleRepository;
 import com.example.hotelmanagement.model.bo.DeptInfoBO;
+import com.example.hotelmanagement.model.bo.RoleInfoBO;
 import com.example.hotelmanagement.model.bo.RoutersInfoBO;
 import com.example.hotelmanagement.model.bo.UserInfoBO;
 import com.example.hotelmanagement.model.bo.UserWebInfoBO;
@@ -39,6 +48,8 @@ public class WebServiceImpl implements WebService {
     private HotelRoleMenuRepository roleMenuRepository;
     @Resource
     private HotelMenuRepository menuRepository;
+    @Resource
+    private HotelRoleRepository roleRepository;
 
     @Override
     public ResponseEntity<?> getUserInfo(Long userId) {
@@ -78,7 +89,19 @@ public class WebServiceImpl implements WebService {
 
         // 角色ID列表
         List<Long> roleIds = userRoleRepository.findRoleIdsByUserId(user.getId());
-        result.setRoles(roleIds == null ? Collections.emptyList() : roleIds);
+        if (roleIds != null && !roleIds.isEmpty()) {
+            List<HotelRole> roles = roleRepository.findAllById(roleIds);
+            List<RoleInfoBO> roleInfos = roles.stream().map(role -> {
+                RoleInfoBO roleInfo = new RoleInfoBO();
+                roleInfo.setId(role.getId());
+                roleInfo.setName(role.getName());
+                roleInfo.setDescription(role.getDescription());
+                return roleInfo;
+            }).collect(Collectors.toList());
+            result.setRoles(roleInfos);
+        } else {
+            result.setRoles(Collections.emptyList());
+        }
 
         // 权限列表
         Set<String> permissionSet = new HashSet<>();
@@ -103,7 +126,7 @@ public class WebServiceImpl implements WebService {
     @Override
     public ResponseEntity<?> getRouters() {
         // 顶级菜单（parentId=0 且可见）
-        List<HotelMenu> parents = menuRepository.findAllVisibleTopLevelMenus();
+        List<HotelMenu> parents = menuRepository.findAllActiveTopLevelMenus();
         List<RoutersInfoBO> result = parents.stream()
                 .map(this::convertMenuToRouter)
                 .collect(Collectors.toList());
@@ -134,7 +157,7 @@ public class WebServiceImpl implements WebService {
         router.setPerms(menu.getPerms());
         router.setIcon(menu.getIcon());
         router.setSortOrder(menu.getSortOrder());
-        router.setVisible(menu.getVisible());
+        router.setActive(menu.getActive());
         router.setChildren(new ArrayList<>());
         return router;
     }

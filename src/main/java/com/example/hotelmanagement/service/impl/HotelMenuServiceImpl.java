@@ -38,7 +38,7 @@ public class HotelMenuServiceImpl implements HotelMenuService {
                     item.setParentId(menu.getParentId());
                     item.setPath(menu.getPath());
                     item.setType(menu.getType() == null ? 0 : menu.getType().intValue());
-                    item.setVisible(Boolean.TRUE.equals(menu.getVisible()));
+                    item.setVisible(Boolean.TRUE.equals(menu.getActive()));
                     return item;
                 })
                 .collect(Collectors.toList());

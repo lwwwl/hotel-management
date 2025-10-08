@@ -13,6 +13,6 @@ public class RoutersInfoBO implements Serializable {
     private String perms;
     private String icon;
     private Integer sortOrder;
-    private Boolean visible;
+    private Boolean active;
     private List<RoutersInfoBO> children;
 }

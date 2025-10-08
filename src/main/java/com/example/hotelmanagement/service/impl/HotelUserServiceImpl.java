@@ -33,6 +33,7 @@ import com.example.hotelmanagement.model.request.UserDeleteRequest;
 import com.example.hotelmanagement.model.request.UserDetailRequest;
 import com.example.hotelmanagement.model.request.UserLockRequest;
 import com.example.hotelmanagement.model.request.UserSearchRequest;
+import com.example.hotelmanagement.model.request.UserUpdateBasicRequest;
 import com.example.hotelmanagement.model.request.UserUpdateRequest;
 import com.example.hotelmanagement.model.response.ApiResponse;
 import com.example.hotelmanagement.model.response.UserDepartmentInfo;
@@ -335,6 +336,48 @@ public class HotelUserServiceImpl implements HotelUserService {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(ApiResponse.error(500, "切换用户锁定状态失败", e.getMessage()));
+        }
+    }
+
+    @Override
+    @Transactional
+    public ResponseEntity<?> updateUserBasicInfo(UserUpdateBasicRequest request, Long userId) {
+        try {
+            Optional<HotelUser> userOptional = userRepository.findById(userId);
+            if (userOptional.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(ApiResponse.error(404, "用户不存在", "未找到指定用户"));
+            }
+
+            HotelUser user = userOptional.get();
+            boolean isUpdated = false;
+
+            if (StringUtils.hasText(request.getDisplayName())) {
+                user.setDisplayName(request.getDisplayName());
+                isUpdated = true;
+            }
+            if (StringUtils.hasText(request.getPhone())) {
+                user.setPhone(request.getPhone());
+                isUpdated = true;
+            }
+            if (StringUtils.hasText(request.getEmail())) {
+                user.setEmail(request.getEmail());
+                isUpdated = true;
+            }
+            if (StringUtils.hasText(request.getPassword())) {
+                user.setPassword(Base64.getEncoder().encodeToString(request.getPassword().getBytes()));
+                isUpdated = true;
+            }
+
+            if (isUpdated) {
+                user.setUpdateTime(new Timestamp(System.currentTimeMillis()));
+                userRepository.save(user);
+            }
+
+            return ResponseEntity.ok(ApiResponse.success(true));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.error(500, "更新用户信息失败", e.getMessage()));
         }
     }
 

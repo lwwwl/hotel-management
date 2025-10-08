@@ -1,12 +1,23 @@
 package com.example.hotelmanagement.controller;
 
-import com.example.hotelmanagement.aop.annotation.RequireUserId;
-import com.example.hotelmanagement.model.request.*;
-import com.example.hotelmanagement.service.HotelUserService;
-import com.example.hotelmanagement.util.UserContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.example.hotelmanagement.aop.annotation.RequireUserId;
+import com.example.hotelmanagement.model.request.UserCreateRequest;
+import com.example.hotelmanagement.model.request.UserDeleteRequest;
+import com.example.hotelmanagement.model.request.UserDetailRequest;
+import com.example.hotelmanagement.model.request.UserLockRequest;
+import com.example.hotelmanagement.model.request.UserSearchRequest;
+import com.example.hotelmanagement.model.request.UserUpdateBasicRequest;
+import com.example.hotelmanagement.model.request.UserUpdateRequest;
+import com.example.hotelmanagement.service.HotelUserService;
+import com.example.hotelmanagement.util.UserContext;
 
 @RestController
 @RequireUserId
@@ -45,6 +56,11 @@ public class UserController {
     @PostMapping("/update")
     public ResponseEntity<?> updateUser(@RequestBody UserUpdateRequest request) {
         return userService.updateUser(request);
+    }
+
+    @PostMapping("/update-basic")
+    public ResponseEntity<?> updateUserBasicInfo(@RequestBody UserUpdateBasicRequest request) {
+        return userService.updateUserBasicInfo(request, UserContext.getUserId());
     }
 
     /**

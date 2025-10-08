@@ -1,13 +1,13 @@
 package com.example.hotelmanagement.model.bo;
 
-import lombok.Data;
-
 import java.io.Serializable;
 import java.util.List;
+
+import lombok.Data;
 
 @Data
 public class UserWebInfoBO implements Serializable {
     private List<String> permissions;
-    private List<Long> roles;
+    private List<RoleInfoBO> roles;
     private UserInfoBO user;
 }

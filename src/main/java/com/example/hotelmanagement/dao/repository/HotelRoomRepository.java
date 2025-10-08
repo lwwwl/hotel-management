@@ -20,12 +20,12 @@ public interface HotelRoomRepository extends JpaRepository<HotelRoom, Long> {
     /**
      * 查找所有有效的房间
      */
-    List<HotelRoom> findByActiveOrderByNameAsc(Short active);
+    List<HotelRoom> findByActiveOrderByNameAscIdAsc(Short active);
     
     /**
      * 根据名称模糊搜索房间
      */
-    @Query(value = "SELECT r FROM HotelRoom r WHERE r.name LIKE %:keyword%")
+    @Query(value = "SELECT r FROM HotelRoom r WHERE r.name LIKE %:keyword% ORDER BY r.id ASC")
     List<HotelRoom> searchByName(@Param("keyword") String keyword);
     
     /**

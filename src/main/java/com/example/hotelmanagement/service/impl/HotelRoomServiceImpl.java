@@ -4,7 +4,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import jakarta.annotation.Resource;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -22,7 +23,7 @@ import com.example.hotelmanagement.service.HotelRoomService;
 @Service
 public class HotelRoomServiceImpl implements HotelRoomService {
 
-    @Autowired
+    @Resource
     private HotelRoomRepository roomRepository;
 
     @Override
@@ -126,14 +127,14 @@ public class HotelRoomServiceImpl implements HotelRoomService {
             List<HotelRoom> result;
             if (request != null) {
                 if (request.getActive() != null) {
-                    result = roomRepository.findByActiveOrderByNameAsc(request.getActive());
+                    result = roomRepository.findByActiveOrderByNameAscIdAsc(request.getActive());
                 } else if (request.getKeyword() != null && !request.getKeyword().trim().isEmpty()) {
                     result = roomRepository.searchByName(request.getKeyword().trim());
                 } else {
-                    result = roomRepository.findAll();
+                    result = roomRepository.findAll(Sort.by(Sort.Direction.ASC, "id"));
                 }
             } else {
-                result = roomRepository.findAll();
+                result = roomRepository.findAll(Sort.by(Sort.Direction.ASC, "id"));
             }
             return ResponseEntity.ok(ApiResponse.success(result));
         } catch (Exception e) {

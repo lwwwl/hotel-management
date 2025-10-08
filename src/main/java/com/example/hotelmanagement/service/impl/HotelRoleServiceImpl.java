@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -273,7 +274,7 @@ public class HotelRoleServiceImpl implements HotelRoleService {
             if (StringUtils.hasText(request.getKeyword())) {
                 roles = roleRepository.searchByNameOrDescription(request.getKeyword());
             } else {
-                roles = roleRepository.findAll();
+                roles = roleRepository.findAll(Sort.by(Sort.Direction.ASC, "id"));
             }
 
             // 预取各角色的菜单与成员数量（成员数量直接取 memberCount，菜单查询关联）

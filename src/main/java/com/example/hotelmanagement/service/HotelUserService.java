@@ -54,6 +54,10 @@ public interface HotelUserService {
     ResponseEntity<?> toggleUserLock(UserLockRequest request);
 
     /**
+     * 将所有用户数据同步到LDAP
+     */
+    void syncAllUsersToLdap();
+    /**
      * 更新当前用户的基本信息
      * @param request 包含要更新的字段
      * @param userId 当前用户ID

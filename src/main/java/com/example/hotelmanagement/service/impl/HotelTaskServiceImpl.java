@@ -3,12 +3,16 @@ package com.example.hotelmanagement.service.impl;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.example.hotelmanagement.dao.repository.HotelTaskRepository;
+import com.example.hotelmanagement.dao.repository.HotelUserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import com.example.hotelmanagement.enums.EventType;
+import com.example.hotelmanagement.enums.EventSubType;
 import com.example.hotelmanagement.model.request.TaskAddExecutorRequest;
 import com.example.hotelmanagement.model.request.TaskChangeStatusRequest;
 import com.example.hotelmanagement.model.request.TaskClaimRequest;
@@ -20,6 +24,7 @@ import com.example.hotelmanagement.model.request.TaskReminderRequest;
 import com.example.hotelmanagement.model.request.TaskTransferExecutorRequest;
 import com.example.hotelmanagement.model.request.TaskUpdateRequest;
 import com.example.hotelmanagement.model.response.ApiResponse;
+import com.example.hotelmanagement.service.EventService;
 import com.example.hotelmanagement.service.HotelNotificationService;
 import com.example.hotelmanagement.service.HotelTaskService;
 import com.example.hotelmanagement.util.HttpClientUtil;
@@ -40,6 +45,15 @@ public class HotelTaskServiceImpl implements HotelTaskService {
 
     @Resource
     private HotelNotificationService hotelNotificationService;
+    
+    @Resource
+    private EventService eventService;
+    
+    @Resource
+    private HotelUserRepository hotelUserRepository;
+    
+    @Resource
+    private HotelTaskRepository hotelTaskRepository;
     
     private Map<String, String> createUserIdHeader(Long userId) {
         Map<String, String> headers = new HashMap<>();
@@ -108,8 +122,16 @@ public class HotelTaskServiceImpl implements HotelTaskService {
             if (response.getBody() != null) {
                 try {
                     ApiResponse<?> apiResponse = (ApiResponse<?>) response.getBody();
-                    Long taskId = (Long) apiResponse.getData();
-                    hotelNotificationService.addNewTaskNotificationToDept(taskId, request.getDeptId());
+                    if (apiResponse.getStatusCode() == 200) {
+                        // 记录事件
+                        hotelUserRepository.findById(userId).ifPresent(user -> {
+                            String content = String.format("%s 创建了工单：%s", user.getDisplayName(), request.getTitle());
+                            eventService.recordEvent(EventType.TASK, EventSubType.CREATE, content);
+                        });
+
+                        Long taskId = (Long) apiResponse.getData();
+                        hotelNotificationService.addNewTaskNotificationToDept(taskId, request.getDeptId());
+                    }
                 } catch (Exception e) {
                     // ignore
                 }
@@ -182,6 +204,16 @@ public class HotelTaskServiceImpl implements HotelTaskService {
             logResponse(response);
             
             if (response.getBody() != null) {
+                ApiResponse<?> apiResponse = (ApiResponse<?>) response.getBody();
+                if (apiResponse.getStatusCode() == 200) {
+                    // 记录事件
+                    hotelUserRepository.findById(userId).ifPresent(user -> {
+                        hotelTaskRepository.findById(request.getTaskId()).ifPresent(task -> {
+                            String content = String.format("%s 认领了工单：%s", user.getDisplayName(), task.getTitle());
+                            eventService.recordEvent(EventType.TASK, EventSubType.CLAIM, content);
+                        });
+                    });
+                }
                 return ResponseEntity.ok(response.getBody());
             } else {
                 ApiResponse<?> errorResponse = ApiResponse.error(500, "请求失败", "远程服务无响应");
@@ -256,11 +288,21 @@ public class HotelTaskServiceImpl implements HotelTaskService {
             logResponse(response);
             
             if (response.getBody() != null) {
-                if ("completed".equals(request.getNewTaskStatus())) {
-                    try {
-                        hotelNotificationService.addCompleteTaskNotificationToDept(request.getTaskId());
-                    } catch (Exception e) {
-                        // ignore
+                ApiResponse<?> apiResponse = (ApiResponse<?>) response.getBody();
+                if (apiResponse.getStatusCode() == 200) {
+                    if ("completed".equals(request.getNewTaskStatus())) {
+                        // 记录事件
+                        hotelUserRepository.findById(userId).ifPresent(user -> {
+                            hotelTaskRepository.findById(request.getTaskId()).ifPresent(task -> {
+                                String content = String.format("%s 完成了工单：%s", user.getDisplayName(), task.getTitle());
+                                eventService.recordEvent(EventType.TASK, EventSubType.COMPLETED, content);
+                            });
+                        });
+                        try {
+                            hotelNotificationService.addCompleteTaskNotificationToDept(request.getTaskId());
+                        } catch (Exception e) {
+                            // ignore
+                        }
                     }
                 }
                 return ResponseEntity.ok(response.getBody());
@@ -350,8 +392,8 @@ public class HotelTaskServiceImpl implements HotelTaskService {
     }
 
     private void logResponse(ResponseEntity<?> response) {
-        logger.info("接口返回 - statusCode: {}, message: {}", 
-                   response.getStatusCode(), 
-                   response.getBody() != null ? ((ApiResponse) response.getBody()).getMessage() : "null");
+        logger.info("接口返回 - statusCode: {}, message: {}",
+                response.getStatusCode(),
+                response.getBody() != null ? response.getBody().toString() : "null");
     }
 }

@@ -5,7 +5,6 @@ import lombok.Data;
 
 @Data
 public class ChatwootAddNewAgentRequest {
-    private String accessToken;
     /**
      * Full Name of the agent
      */
@@ -20,8 +19,10 @@ public class ChatwootAddNewAgentRequest {
      * Whether its administrator or agent.
      * agent/administrator
      */
-    private String role;
-    
+    private String role = "agent";
+
+    private String password;
+
     /**
      * The availability setting of the agent.
      */

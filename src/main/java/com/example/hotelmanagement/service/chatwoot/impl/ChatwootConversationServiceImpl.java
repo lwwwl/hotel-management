@@ -9,6 +9,7 @@ import jakarta.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -145,18 +146,16 @@ public class ChatwootConversationServiceImpl implements ChatwootConversationServ
     }
 
     @Override
-    public ChatwootAssignConversationResponse assignConversation(ChatwootAssignConversationRequest request) {
-        String apiPath = "/api/v1/accounts/" + request.getAccountId() + "/conversations/" + request.getConversationId() + "/assignments";
+    public boolean assignConversation(ChatwootAssignConversationRequest request, String userAccessToken, Long chatwootUserId) {
+        String apiPath = "/api/v1/accounts/" + accountId + "/conversations/" + request.getConversationId() + "/assignments";
         logger.info("调用Chatwoot分配会话接口: {}", apiPath);
         try {
-            ResponseEntity<ChatwootAssignConversationResponse> response = chatwootHttpClientUtil.post(apiPath, request, ChatwootAssignConversationResponse.class, request.getAccessToken());
+            ResponseEntity<Map> response = chatwootHttpClientUtil.post(apiPath, request, Map.class, userAccessToken);
             logResponse(response);
-            return response.getBody();
+            return response.getStatusCode() == HttpStatus.OK;
         } catch (Exception e) {
             logger.error("调用Chatwoot分配会话接口失败: {}, error: {}", apiPath, e.getMessage(), e);
-            ChatwootAssignConversationResponse errResponse = new ChatwootAssignConversationResponse();
-            errResponse.setError(e.getMessage());
-            return errResponse;
+            return false;
         }
     }
 
@@ -177,18 +176,16 @@ public class ChatwootConversationServiceImpl implements ChatwootConversationServ
     }
 
     @Override
-    public ChatwootToggleConversationStatusResponse toggleConversationStatus(ChatwootToggleConversationStatusRequest request) {
+    public boolean toggleConversationStatus(ChatwootToggleConversationStatusRequest request, String userAccessToken) {
         String apiPath = "/api/v1/accounts/" + accountId + "/conversations/" + request.getConversationId() + "/toggle_status";
         logger.info("调用Chatwoot切换会话状态接口: {}", apiPath);
         try {
-            ResponseEntity<ChatwootToggleConversationStatusResponse> response = chatwootHttpClientUtil.post(apiPath, request, ChatwootToggleConversationStatusResponse.class, request.getAccessToken());
+            ResponseEntity<ChatwootToggleConversationStatusResponse> response = chatwootHttpClientUtil.post(apiPath, request, ChatwootToggleConversationStatusResponse.class, userAccessToken);
             logResponse(response);
-            return response.getBody();
+            return response.getStatusCode() == HttpStatus.OK;
         } catch (Exception e) {
             logger.error("调用Chatwoot切换会话状态接口失败: {}, error: {}", apiPath, e.getMessage(), e);
-            ChatwootToggleConversationStatusResponse errResponse = new ChatwootToggleConversationStatusResponse();
-            errResponse.setError(e.getMessage());
-            return errResponse;
+            return false;
         }
     }
 

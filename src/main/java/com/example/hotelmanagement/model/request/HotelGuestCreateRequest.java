@@ -11,5 +11,4 @@ public class HotelGuestCreateRequest {
     private String guestName;
     private String roomName;
     private String phoneSuffix;
-    private Long checkInTime;
 }

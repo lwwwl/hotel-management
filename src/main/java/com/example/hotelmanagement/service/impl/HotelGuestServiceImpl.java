@@ -5,16 +5,16 @@ import com.example.hotelmanagement.dao.repository.HotelGuestRepository;
 import com.example.hotelmanagement.dao.repository.HotelRoomRepository;
 import com.example.hotelmanagement.dao.entity.HotelRoom;
 import com.example.hotelmanagement.enums.ConversationLabelEnum;
-import com.example.hotelmanagement.model.bo.ChatwootAdditionalAttributes;
-import com.example.hotelmanagement.model.bo.ChatwootContactDetailBO;
-import com.example.hotelmanagement.model.bo.ChatwootContactInboxBO;
+import com.example.hotelmanagement.model.bo.*;
 import com.example.hotelmanagement.model.request.HotelGuestCreateRequest;
 import com.example.hotelmanagement.model.request.HotelGuestUpdateRequest;
 import com.example.hotelmanagement.model.request.HotelGuestDeleteRequest;
 import com.example.hotelmanagement.model.request.HotelGuestDetailRequest;
 import com.example.hotelmanagement.model.request.chatwoot.ChatwootAddLabelRequest;
 import com.example.hotelmanagement.model.request.chatwoot.ChatwootContactCreateRequest;
+import com.example.hotelmanagement.model.request.chatwoot.GuestChatwootCreateConversationRequest;
 import com.example.hotelmanagement.model.response.ResponseResult;
+import com.example.hotelmanagement.model.response.chatwoot.GuestChatwootCreateConversationResponse;
 import com.example.hotelmanagement.service.ChatwootGuestFacadeService;
 import com.example.hotelmanagement.service.HotelGuestService;
 import com.example.hotelmanagement.service.chatwoot.ChatwootLabelService;
@@ -53,18 +53,23 @@ public class HotelGuestServiceImpl implements HotelGuestService {
     @Value("${chatwoot.inbox.id}")
     private Long chatwootInboxId;
 
-    @Value("${chatwoot.account.id}")
-    private Long chatwootAccountId;
-
     @Override
     @Transactional
     public ResponseEntity<?> createGuest(HotelGuestCreateRequest request) {
         // todo 请求酒店服务获取用户入住时间等信息
-        Long checkInTime = System.currentTimeMillis();
+        Long checkInTime = null;
         Long leaveTime = null;
-        String phoneNumber = null;
+        // 若用户不是扫码进入的，前端roomName一定为null，走此接口一定会创建新用户
 
-        // todo 目前所有请求都创建新guest，之后要做判断，若guest表中存在同样的checkInTime+phoneNumber或checkInTime+name，则返回已有数据。
+        // 通过 phone_suffix + room_name 以及guest更新时间距今小于24小时的用户
+        List<HotelGuest> hotelGuests = hotelGuestRepository.findByPhoneSuffixAndRoomNameAndCreateTimeGreaterThan(
+                request.getPhoneSuffix(), request.getRoomName(), new Timestamp(System.currentTimeMillis() - 24 * 60 * 60 * 1000));
+        if (!hotelGuests.isEmpty()) {
+            HotelGuest guest = hotelGuests.get(0);
+            guest.setUpdateTime(new Timestamp(System.currentTimeMillis()));
+            hotelGuestRepository.save(guest);
+            return ResponseEntity.ok(guest);
+        }
 
         // 获取房间信息
         HotelRoom room = null;
@@ -73,7 +78,7 @@ public class HotelGuestServiceImpl implements HotelGuestService {
         }
 
         // 创建chatwoot账号
-        // phoneNumbere, email都传空，chatwoot会依据identifier做唯一性验证
+        // phoneNumber, email都传空，chatwoot会依据identifier做唯一性验证
         ChatwootContactCreateRequest chatwootContactCreateRequest = new ChatwootContactCreateRequest();
         chatwootContactCreateRequest.setInboxId(chatwootInboxId);
         chatwootContactCreateRequest.setName(request.getGuestName());
@@ -94,12 +99,20 @@ public class HotelGuestServiceImpl implements HotelGuestService {
 
         chatwootContactCreateRequest.setAdditionalAttributes(additionalAttributes);
 
-        ChatwootContactDetailBO chatwootContactDetailBO = chatwootGuestFacadeService.createContact(chatwootContactCreateRequest);
-        if (chatwootContactDetailBO == null) {
+        ChatwootCreateContactRespBO chatwootCreateContactRespBO = chatwootGuestFacadeService.createContact(chatwootContactCreateRequest);
+        if (chatwootCreateContactRespBO == null) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Chatwoot contact 创建失败");
         }
-        Long contactId = chatwootContactDetailBO.getId();
-        String sourceId = safeGetSourceId(chatwootContactDetailBO);
+        Long contactId = chatwootCreateContactRespBO.getContactId();
+        String sourceId = chatwootCreateContactRespBO.getSourceId();
+
+        GuestChatwootCreateConversationRequest createConversationRequest = new GuestChatwootCreateConversationRequest();
+        createConversationRequest.setContactIdentifier(sourceId);
+        ChatwootGuestCreateConversationRespBO guestCreateConversationRespBO = chatwootGuestFacadeService.createConversation(createConversationRequest);
+        if  (guestCreateConversationRespBO == null) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Chatwoot conversation 创建失败");
+        }
+        Long conversationId = guestCreateConversationRespBO.getConversationId();
 
         ChatwootAddLabelRequest chatwootAddLabelRequest = new ChatwootAddLabelRequest();
         chatwootAddLabelRequest.setContactId(contactId);
@@ -115,13 +128,15 @@ public class HotelGuestServiceImpl implements HotelGuestService {
         guest.setPhoneSuffix(request.getPhoneSuffix());
         guest.setChatwootContactId(contactId);
         guest.setChatwootSourceId(sourceId);
-        guest.setCheckInTime(new Timestamp(checkInTime));
-        guest.setLeaveTime(new Timestamp(leaveTime));
+        guest.setChatwootConversationId(conversationId);
+        guest.setCheckInTime(null);
+        guest.setLeaveTime(null);
         guest.setVerify(Boolean.FALSE);
         guest.setCreateTime(new Timestamp(System.currentTimeMillis()));
         guest.setUpdateTime(new Timestamp(System.currentTimeMillis()));
 
         hotelGuestRepository.save(guest);
+        logger.info("新用户创建成功 guestId:{}", guest.getId());
         return ResponseEntity.ok(guest);
     }
 
@@ -172,14 +187,5 @@ public class HotelGuestServiceImpl implements HotelGuestService {
             return ResponseEntity.ok().body(ResponseResult.fail("Guest not found"));
         }
         return ResponseEntity.ok(hotelGuest);
-    }
-
-    // 判空获取sourceId
-    private String safeGetSourceId(ChatwootContactDetailBO detailBO) {
-        if (detailBO == null || detailBO.getContactInboxes() == null || detailBO.getContactInboxes().isEmpty()) {
-            return null;
-        }
-        ChatwootContactInboxBO inbox = detailBO.getContactInboxes().get(0);
-        return inbox != null ? inbox.getSourceId() : null;
     }
 }

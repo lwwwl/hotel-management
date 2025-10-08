@@ -21,6 +21,9 @@ public class ChatwootInboxServiceImpl implements ChatwootInboxService {
     @Value("${chatwoot.account.id}")
     private Long accountId;
 
+    @Value("${api.chatwoot.administrator.access.token}")
+    private String administratorAccessToken;
+
     @Autowired
     public ChatwootInboxServiceImpl(ChatwootHttpClientUtil chatwootHttpClientUtil) {
         this.chatwootHttpClientUtil = chatwootHttpClientUtil;
@@ -32,7 +35,7 @@ public class ChatwootInboxServiceImpl implements ChatwootInboxService {
         logger.info("调用Chatwoot添加用户到收件箱接口: {}", apiPath);
         
         try {
-            ResponseEntity<ChatwootAddUserToInboxResponse> response = chatwootHttpClientUtil.post(apiPath, request, ChatwootAddUserToInboxResponse.class, request.getAccessToken());
+            ResponseEntity<ChatwootAddUserToInboxResponse> response = chatwootHttpClientUtil.post(apiPath, request, ChatwootAddUserToInboxResponse.class, administratorAccessToken);
             logResponse(response);
             
             return response.getBody();
@@ -45,8 +48,8 @@ public class ChatwootInboxServiceImpl implements ChatwootInboxService {
     }
 
     private void logResponse(ResponseEntity<?> response) {
-        logger.info("Chatwoot收件箱接口返回 - statusCode: {}, message: {}", 
-                   response.getStatusCode(), 
-                   response.getBody() != null ? ((ApiResponse) response.getBody()).getMessage() : "null");
+        logger.info("Chatwoot收件箱接口返回 - statusCode: {}, message: {}",
+                response.getStatusCode(),
+                response.getBody() != null ? response.getBody().toString() : "null");
     }
 }

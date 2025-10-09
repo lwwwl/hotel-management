@@ -399,13 +399,14 @@ public class HotelUserServiceImpl implements HotelUserService {
                 isUpdated = true;
             }
             if (StringUtils.hasText(request.getPassword())) {
-                user.setPassword(Base64.getEncoder().encodeToString(request.getPassword().getBytes()));
+                user.setPassword(PasswordUtil.hashPassword(request.getPassword()));
                 isUpdated = true;
             }
 
             if (isUpdated) {
                 user.setUpdateTime(new Timestamp(System.currentTimeMillis()));
-                userRepository.save(user);
+                HotelUser savedUser = userRepository.save(user);
+                ldapService.updateUser(savedUser);
             }
 
             return ResponseEntity.ok(ApiResponse.success(true));

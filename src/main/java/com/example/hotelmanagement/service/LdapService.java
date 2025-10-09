@@ -15,6 +15,9 @@ import javax.naming.directory.Attributes;
 import javax.naming.directory.BasicAttribute;
 import javax.naming.directory.BasicAttributes;
 import javax.naming.directory.DirContext;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @Service
@@ -58,7 +61,18 @@ public class LdapService {
         context.setAttributeValue("sn", user.getUsername());
         context.setAttributeValue("userPassword", user.getPassword());
 
-        // Ensure the objectClass is set correctly for a person
+        if (user.getActive() != null && user.getActive() == 0) {
+            // 用户已禁用，通过设置 pwdAccountLockedTime 来锁定账户
+            String lockedTime = ZonedDateTime.now(ZoneOffset.UTC).format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss'Z'"));
+            context.setAttributeValue("pwdAccountLockedTime", lockedTime);
+        } else {
+            // 用户已启用，确保 pwdAccountLockedTime 属性被移除
+            if (context.attributeExists("pwdAccountLockedTime")) {
+                context.setAttributeValues("pwdAccountLockedTime", null);
+            }
+        }
+
+        // 确保为人员正确设置 objectClass
         context.setAttributeValues("objectClass", new String[]{"top", "person", "organizationalPerson", "inetOrgPerson"});
     }
 

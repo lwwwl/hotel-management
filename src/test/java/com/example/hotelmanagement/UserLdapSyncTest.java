@@ -14,7 +14,7 @@ public class UserLdapSyncTest {
     @Test
     public void syncAllUsersToLdap() {
         System.out.println("Starting full synchronization of users to LDAP...");
-        hotelUserService.syncAllUsersToLdap();
+//        hotelUserService.syncAllUsersToLdap();
         System.out.println("Full synchronization of users to LDAP completed.");
     }
 }

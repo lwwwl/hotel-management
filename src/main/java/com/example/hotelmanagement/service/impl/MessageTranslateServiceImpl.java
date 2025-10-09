@@ -89,33 +89,12 @@ public class MessageTranslateServiceImpl implements MessageTranslateService {
                 mt.setUpdateTime(new Timestamp(System.currentTimeMillis()));
                 newTranslations.add(mt);
             }
-            try {
-                // 首次尝试批量保存
-                messageTranslateRepository.saveAll(newTranslations);
-            } catch (DataIntegrityViolationException e) {
-                // 捕获唯一约束冲突异常。这通常发生在并发请求翻译相同消息时。
-                // 为了处理这种情况，我们筛选出数据库中已存在的记录，
-                // 然后仅对新记录进行第二次批量保存尝试。
-                List<Long> messageIdsToCheck = newTranslations.stream()
-                        .map(MessageTranslate::getMessageId)
-                        .collect(Collectors.toList());
-
-                // 重新查询数据库，找出哪些消息的翻译已经存在
-                List<MessageTranslate> existingTranslations = messageTranslateRepository.findByConversationIdAndMessageIdInAndLanguage(
-                        conversationId, messageIdsToCheck, languageCode);
-
-                Set<Long> existingMessageIds = existingTranslations.stream()
-                        .map(MessageTranslate::getMessageId)
-                        .collect(Collectors.toSet());
-
-                // 过滤出尚未保存的翻译记录
-                List<MessageTranslate> translationsToSave = newTranslations.stream()
-                        .filter(mt -> !existingMessageIds.contains(mt.getMessageId()))
-                        .collect(Collectors.toList());
-
-                // 如果还有未保存的记录，则进行第二次批量保存
-                if (!translationsToSave.isEmpty()) {
-                    messageTranslateRepository.saveAll(translationsToSave);
+            // 逐条保存新翻译，忽略唯一约束冲突
+            for (MessageTranslate translation : newTranslations) {
+                try {
+                    messageTranslateRepository.save(translation);
+                } catch (DataIntegrityViolationException e) {
+                    // 并发场景下，另一线程可能已成功插入，忽略此异常并继续
                 }
             }
             results.addAll(translatedResults);

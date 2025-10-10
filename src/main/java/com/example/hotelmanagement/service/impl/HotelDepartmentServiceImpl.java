@@ -1,11 +1,7 @@
 package com.example.hotelmanagement.service.impl;
 
 import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import org.springframework.http.ResponseEntity;
@@ -72,12 +68,13 @@ public class HotelDepartmentServiceImpl implements HotelDepartmentService {
     @Override
     public ResponseEntity<?> getDeptList(DeptListRequest request) {
         List<HotelDepartment> departments = departmentRepository.findAll();
-        List<Long> leaderIds = departments.stream().map(HotelDepartment::getLeaderUserId).distinct().collect(Collectors.toList());
+        List<HotelDepartment> sortedDeptList = departments.stream().sorted(Comparator.comparing(HotelDepartment::getId)).toList();
+        List<Long> leaderIds = sortedDeptList.stream().map(HotelDepartment::getLeaderUserId).distinct().collect(Collectors.toList());
         // 批量查领导
         List<HotelUser> leaders = userRepository.findAllById(leaderIds);
         Map<Long, HotelUser> leaderMap = leaders.stream().collect(Collectors.toMap(HotelUser::getId, u -> u));
         List<DeptListItemBO> deptList = new ArrayList<>();
-        for (HotelDepartment d : departments) {
+        for (HotelDepartment d : sortedDeptList) {
             DeptListItemBO item = new DeptListItemBO();
             item.setDeptId(d.getId());
             item.setDeptName(d.getName());

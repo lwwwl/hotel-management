@@ -23,6 +23,8 @@ import java.util.List;
 @Service
 public class LdapService {
 
+    private static final String SUSPENDED_MARKER = "SUSPENDED_ACCOUNT";
+
     @Autowired
     private LdapTemplate ldapTemplate;
 
@@ -61,14 +63,16 @@ public class LdapService {
         context.setAttributeValue("sn", user.getUsername());
         context.setAttributeValue("userPassword", user.getPassword());
 
+        // 根据用户状态操作 description 属性
         if (user.getActive() != null && user.getActive() == 0) {
-            // 用户已禁用，通过设置 pwdAccountLockedTime 来锁定账户
-            String lockedTime = ZonedDateTime.now(ZoneOffset.UTC).format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss'Z'"));
-            context.setAttributeValue("pwdAccountLockedTime", lockedTime);
+            // 用户已禁用 (user.getActive() == 0)，设置 SUSPENDED_MARKER 标记
+            context.setAttributeValue("description", SUSPENDED_MARKER);
+
         } else {
-            // 用户已启用，确保 pwdAccountLockedTime 属性被移除
-            if (context.attributeExists("pwdAccountLockedTime")) {
-                context.setAttributeValues("pwdAccountLockedTime", null);
+            // 用户已启用 (user.getActive() != 0)，确保 SUSPENDED_MARKER 被移除
+            if (context.attributeExists("description")) {
+                // 明确设置为 null，指示 Spring LDAP 在执行 modify 时删除此属性（如果它在 LDAP 上有值）
+                context.setAttributeValues("description", null);
             }
         }
 

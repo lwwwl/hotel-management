@@ -24,7 +24,7 @@ import java.util.Optional;
 @Slf4j
 @RestController
 @CrossOrigin
-@RequestMapping("/api")
+@RequestMapping("/app/auth")
 public class AppAuthController {
 
     @Autowired
